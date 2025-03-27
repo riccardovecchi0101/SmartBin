@@ -5,12 +5,12 @@ from models import db, Utente
 
 import secrets
 
-secret_key = secrets.token_hex(16) #good for develop, bad for production (ma stica)
-app.config['SECRET_KEY'] = secret_key
-
-app = Flask("SmartBin")
+app = Flask("mainApp")
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+secret_key = secrets.token_hex(16) #good for develop, bad for production (ma stica)
+app.config['SECRET_KEY'] = secret_key
 
 db.init_app(app)
 migrate = Migrate(app, db) 
