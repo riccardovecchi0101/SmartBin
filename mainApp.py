@@ -1,9 +1,11 @@
 import secrets
+import paho
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_migrate import Migrate
 
 from models import *
+from loader import receive_message
 
 secret_key = secrets.token_hex(16)  # good for develop, bad for production (ma stica)
 
@@ -11,6 +13,8 @@ app = Flask("SmartBin")
 app.config['SECRET_KEY'] = secret_key
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -94,7 +98,7 @@ def login():
 
         session['user_id'] = inserviente.id
         flash(f"Benvenuto, {inserviente.username}!", "success")
-        return redirect(url_for('index'))
+        return dashboard(inserviente.uuid)
 
     return render_template('login.html')
 
@@ -105,15 +109,21 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route("/dashboard")
-def dashboard():
+@app.route("/dashboard/<uuid>")
+def dashboard(uuid):
     if "user_id" not in session:
         return redirect(url_for('login'))
 
     inserviente = Inserviente.query.get(session['user_id'])
 
-    return render_template("dashboard.html", inserviente=inserviente)
+    message = receive_message()
 
+    if message:
+        print(f"Messaggio ricevuto: {message}")
+    else:
+        print("Nessun messaggio ricevuto entro il timeout ")
+
+    return render_template("dashboard.html", inserviente=inserviente)
 
 with app.app_context():
     db.create_all()
