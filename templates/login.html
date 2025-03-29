@@ -1,18 +1,26 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1 class="title">Login</h1>
-    <form method="post">
-        <div class="field">
-            <label class="label">Inserisci il tuo username</label>
-            <div class="control">
-                <input class="input" type="text" name="username" required>
+    <div class="box">
+        <h1 class="title">Login</h1>
+        <form method="post" action="{{ url_for('login') }}">
+            <div class="field">
+                <label class="label">Username</label>
+                <div class="control">
+                    <input class="input" type="text" name="username" placeholder="Inserisci il tuo username" required>
+                </div>
             </div>
-            <label class="label mt-4">Inserisci la tua password</label>
-            <div class="control">
-                <input class="input" type="text" name="password" required>
+
+            <div class="field">
+                <label class="label">Password</label>
+                <div class="control">
+                    <input class="input" type="password" name="password" placeholder="Inserisci la tua password" required>
+                </div>
             </div>
-        </div>
-        <button class="button is-primary">Verifica UUID</button>
-    </form>
+
+            <div class="control">
+                <button class="button is-primary" type="submit">Accedi</button>
+            </div>
+        </form>
+    </div>
 {% endblock %}

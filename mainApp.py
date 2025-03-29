@@ -1,13 +1,12 @@
 import secrets
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_migrate import Migrate
 
 from models import *
 
 secret_key = secrets.token_hex(16)  # good for develop, bad for production (ma stica)
 
-allowed_uids = ['9f1f8ec7-7ad1-48d0-bb4a-4f57c8e77d8c', '8cbbac49-b06f-4cb4-b93d-1c641b205ef9']
 app = Flask("SmartBin")
 app.config['SECRET_KEY'] = secret_key
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
@@ -31,18 +30,18 @@ def index():
 def handle_404(e):
     return home()
 
+
 @app.route("/firstAccess", methods=['GET', 'POST'])
 def firstAccess():
     if request.method == 'POST':
         uuid_input = request.form.get('uuid')
         inserviente = Inserviente.query.filter_by(uuid=uuid_input).first()
 
-        if uuid_input not in allowed_uids:
-            print("ehi")
+        if not inserviente:
             flash("UUID non valido!", "danger")
             return redirect(url_for('firstAccess'))
 
-        if inserviente and inserviente.username:
+        if inserviente.username:
             flash("UUID già registrato. Effettua il login.", "warning")
             return redirect(url_for('login'))
 
@@ -50,30 +49,70 @@ def firstAccess():
 
     return render_template('firstAccess.html')
 
-@app.route("/signup/<uuid>", methods=['GET', 'POST'])
-def signup(uuid):
+
+@app.route("/signup", methods=['GET', 'POST'])
+def signup():
+    uuid = request.args.get('uuid')
+    inserviente = Inserviente.query.filter_by(uuid=uuid).first()
+
+    if not uuid:
+        flash("UUID mancante. Inserisci il tuo UUID per registrarti.", "danger")
+
     if request.method == 'POST':
-        UUID = uuid
-        name = request.form.get('name')
-        surname = request.form.get('surname')
         username = request.form.get('username')
         password = request.form.get('password')
+        name = request.form.get('name')
+        surname = request.form.get('surname')
 
-        print(UUID+'\t'+name+'\t'+surname+'\t'+username+'\t'+password)
-        
-        
+        if Inserviente.query.filter_by(username=username).first():
+            flash("Username già in uso!", "danger")
+            return redirect(url_for('signup', uuid=uuid))
 
-      
-    return render_template('signup.html')
+        inserviente.name = name
+        inserviente.surname = surname
+        inserviente.username = username
+        inserviente.set_password(password)
+        db.session.commit()
+
+        flash("Registrazione completata.", "success")
+        return redirect(url_for('index'))
+
+    return render_template('signup.html', uuid=uuid)
+
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        inserviente = Inserviente.query.filter_by(username=username).first()
+
+        if not inserviente or not inserviente.check_password(password):
+            flash("Credenziali non valide.", "warning")
+            return redirect(url_for('login'))
+
+        session['user_id'] = inserviente.id
+        flash(f"Benvenuto, {inserviente.username}!", "success")
+        return redirect(url_for('index'))
+
     return render_template('login.html')
 
-@app.get('/hq/<id>')
-def hq(id):
-    pass
 
+@app.route("/logout")
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('index'))
+
+
+@app.route("/dashboard")
+def dashboard():
+    if "user_id" not in session:
+        return redirect(url_for('login'))
+
+    inserviente = Inserviente.query.get(session['user_id'])
+
+    return render_template("dashboard.html", inserviente=inserviente)
 
 
 with app.app_context():

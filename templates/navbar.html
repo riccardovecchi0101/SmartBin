@@ -43,7 +43,7 @@
                 </a>
 
                 <div class="navbar-dropdown">
-                        <a href ="https://github.com/riccardovecchi0101/SmartBin">Leave a star &#11088;</a>
+                    <a href="https://github.com/riccardovecchi0101/SmartBin">Leave a star &#11088;</a>
                 </div>
             </div>
         </div>
@@ -51,12 +51,18 @@
         <div class="navbar-end">
             <div class="navbar-item">
                 <div class="buttons">
-                    <a class="button is-primary" href="{{ url_for('firstAccess') }}">
-                        <strong>First Access</strong>
-                    </a>
-                    <a class="button is-light" href="{{ url_for('login') }}">
-                        Log in
-                    </a>
+                    {% if not session.get('user_id') %}
+                        <a class="button is-primary" href="{{ url_for('firstAccess') }}">
+                            <strong>First Access</strong>
+                        </a>
+                        <a class="button is-light" href="{{ url_for('login') }}">
+                            Log in
+                        </a>
+                    {% else %}
+                        <a class="button is-light" href="{{ url_for('logout') }}">
+                        Log out
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

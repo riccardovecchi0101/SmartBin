@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<h1 class="title">Benvenuto, {{ inserviente.username }}!</h1>
+
+    <div class="box">
+        <h2 class="subtitle">Informazioni</h2>
+        <p><strong>UUID:</strong>{{ inserviente.uuid }}</p>
+        <p><strong>Piano:</strong>{{ inserviente.piano }}</p>
+    </div>
+{% endblock %}
