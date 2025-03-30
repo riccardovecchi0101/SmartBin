@@ -1,5 +1,6 @@
 import secrets
 import paho
+import json
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_migrate import Migrate
@@ -98,7 +99,7 @@ def login():
 
         session['user_id'] = inserviente.id
         flash(f"Benvenuto, {inserviente.username}!", "success")
-        return dashboard(inserviente.uuid)
+        return redirect(url_for('dashboard', uuid=inserviente.uuid))
 
     return render_template('login.html')
 
@@ -116,12 +117,35 @@ def dashboard(uuid):
 
     inserviente = Inserviente.query.get(session['user_id'])
 
-    message = receive_message()
+    topic=str(inserviente.uuid)+'/test'
+    #message = receive_message(topic=topic)
+    print(topic)
 
-    if message:
-        print(f"Messaggio ricevuto: {message}")
+    message_dummy = {"id": "1", "floor": "2", "weight": "13kg", "distance": "10m", "is_full": "false"}
+    bidone_id = int(message_dummy['id'])
+
+    bin = Bidone.query.filter(
+        Bidone.inserviente_id == inserviente.id,
+        Bidone.id == bidone_id
+    ).first()
+
+    if bin:
+        bin.floor = message_dummy['floor']
+        bin.weight = message_dummy['weight']
+        bin.distance = message_dummy['distance']
+        bin.is_full = message_dummy['is_full'].lower() == 'true'
+
     else:
-        print("Nessun messaggio ricevuto entro il timeout ")
+        bin = Bidone(
+            inserviente=inserviente,
+            floor=message_dummy['floor'],
+            weight=message_dummy['weight'],
+            distance=message_dummy['distance'],
+            is_full=message_dummy['is_full'].lower() == 'true'
+        )
+        db.session.add(bin)
+
+    db.session.commit()
 
     return render_template("dashboard.html", inserviente=inserviente)
 

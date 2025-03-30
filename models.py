@@ -20,3 +20,15 @@ class Inserviente(db.Model):
 
     def __repr__(self):
         return f"<Inserviente {self.name}, >" + ":" + " " + "UUID:" + self.uuid
+    
+class Bidone(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    inserviente_id = db.Column(db.Integer, db.ForeignKey('inserviente.id'), nullable=True)
+    inserviente = db.relationship('Inserviente', backref=db.backref('bidoni', lazy=True))
+    floor = db.Column(db.String(15), unique=False, nullable=True)
+    weight = db.Column(db.String(15), unique=False, nullable=True)
+    distance = db.Column(db.String(15), unique=False, nullable=True)
+    is_full = db.Column(db.Boolean, unique=False, nullable=True)
+
+    def __repr_(self):
+        return f"Bidone: {self.id}, Gestito da: {self.inserviente}"
