@@ -6,6 +6,7 @@
     <title>Welcome to Smart Bin!</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
 </head>
 
 <body>
@@ -40,8 +41,10 @@
     {% endblock %}
 </div>
 
+{% block scripts %}
 <script src="{{ url_for('static', filename='js/flashMessages.js') }}"></script>
 <script src="{{ url_for('static', filename='js/closeMessages.js') }}"></script>
+{% endblock %}
 
 </body>
 

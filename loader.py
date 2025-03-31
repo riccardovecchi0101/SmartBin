@@ -25,7 +25,7 @@ def receive_message(topic, timeout_sec=5):
     client.on_connect = on_connect
     client.on_message = on_message
 
-    client.connect("broker.hivemq.com", 1883, 60)
+    client.connect("test.mosquitto.org", 1883, 60)
     client.loop_start()
 
     # Attendi fino a ricezione o timeout

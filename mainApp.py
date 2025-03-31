@@ -117,37 +117,45 @@ def dashboard(uuid):
 
     inserviente = Inserviente.query.get(session['user_id'])
 
-    topic=str(inserviente.uuid)+'/test'
-    #message = receive_message(topic=topic)
+    topic=str(inserviente.uuid)+'/test2'
+    message = receive_message(topic=topic)
+    payload_dict = json.loads(message)   # Converti di nuovo in dizionario
+
     print(topic)
 
-    message_dummy = {"id": "1", "floor": "2", "weight": "13kg", "distance": "10m", "is_full": "false"}
-    bidone_id = int(message_dummy['id'])
+    if message:
+   
+        bidone_id = int(payload_dict['id'])
+        bin = Bidone.query.filter(
+            Bidone.inserviente_id == inserviente.id,
+            Bidone.id == bidone_id
+        ).first()
 
-    bin = Bidone.query.filter(
-        Bidone.inserviente_id == inserviente.id,
-        Bidone.id == bidone_id
-    ).first()
+        if bin:
+            bin.floor = payload_dict['floor']
+            bin.weight = payload_dict['weight']
+            bin.distance = payload_dict['distance']
+            bin.is_full = payload_dict['is_full']
 
-    if bin:
-        bin.floor = message_dummy['floor']
-        bin.weight = message_dummy['weight']
-        bin.distance = message_dummy['distance']
-        bin.is_full = message_dummy['is_full'].lower() == 'true'
+        else:
+            bin = Bidone(
+                inserviente=inserviente,
+                floor=payload_dict['floor'],
+                weight=payload_dict['weight'],
+                distance=payload_dict['distance'],
+                is_full=payload_dict['is_full']
+            )
+            db.session.add(bin)
 
+        db.session.commit()
+    
     else:
-        bin = Bidone(
-            inserviente=inserviente,
-            floor=message_dummy['floor'],
-            weight=message_dummy['weight'],
-            distance=message_dummy['distance'],
-            is_full=message_dummy['is_full'].lower() == 'true'
-        )
-        db.session.add(bin)
+        print("Non ho ricevuto nulla entro il timeout")
 
-    db.session.commit()
+    bin_list = lista_bidoni = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
+    
 
-    return render_template("dashboard.html", inserviente=inserviente)
+    return render_template("dashboard.html", inserviente = inserviente, bin_list = bin_list)
 
 with app.app_context():
     db.create_all()
