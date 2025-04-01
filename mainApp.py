@@ -116,15 +116,11 @@ def dashboard(uuid):
         return redirect(url_for('login'))
 
     inserviente = Inserviente.query.get(session['user_id'])
-
     topic=str(inserviente.uuid)+'/test2'
     message = receive_message(topic=topic)
-    payload_dict = json.loads(message)   # Converti di nuovo in dizionario
 
-    print(topic)
-
-    if message:
-   
+    if message is not None:
+        payload_dict = json.loads(message)   # Converti di nuovo in dizionario
         bidone_id = int(payload_dict['id'])
         bin = Bidone.query.filter(
             Bidone.inserviente_id == inserviente.id,
