@@ -135,6 +135,7 @@ def dashboard(uuid):
 
         else:
             bin = Bidone(
+                id = bidone_id,
                 inserviente=inserviente,
                 floor=payload_dict['floor'],
                 weight=payload_dict['weight'],

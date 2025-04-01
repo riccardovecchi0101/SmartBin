@@ -22,7 +22,7 @@ class Inserviente(db.Model):
         return f"<Inserviente {self.name}, >" + ":" + " " + "UUID:" + self.uuid
     
 class Bidone(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement = False)
     inserviente_id = db.Column(db.Integer, db.ForeignKey('inserviente.id'), nullable=True)
     inserviente = db.relationship('Inserviente', backref=db.backref('bidoni', lazy=True))
     floor = db.Column(db.String(15), unique=False, nullable=True)
