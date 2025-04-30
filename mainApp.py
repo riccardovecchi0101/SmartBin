@@ -2,7 +2,7 @@ import secrets
 import paho
 import json
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_migrate import Migrate
 
 from models import *
@@ -14,8 +14,6 @@ app = Flask("SmartBin")
 app.config['SECRET_KEY'] = secret_key
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -110,17 +108,18 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route("/dashboard/<uuid>")
-def dashboard(uuid):
+@app.route("/dashboard/")
+def dashboard():
     if "user_id" not in session:
         return redirect(url_for('login'))
 
     inserviente = Inserviente.query.get(session['user_id'])
-    topic=str(inserviente.uuid)+'/test2'
+
+    topic = str(inserviente.uuid) + '/test2'
     message = receive_message(topic=topic)
 
     if message is not None:
-        payload_dict = json.loads(message)   # Converti di nuovo in dizionario
+        payload_dict = json.loads(message)  # Converti di nuovo in dizionario
         bidone_id = int(payload_dict['id'])
         bin = Bidone.query.filter(
             Bidone.inserviente_id == inserviente.id,
@@ -135,7 +134,7 @@ def dashboard(uuid):
 
         else:
             bin = Bidone(
-                id = bidone_id,
+                id=bidone_id,
                 inserviente=inserviente,
                 floor=payload_dict['floor'],
                 weight=payload_dict['weight'],
@@ -145,14 +144,57 @@ def dashboard(uuid):
             db.session.add(bin)
 
         db.session.commit()
-    
+
     else:
         print("Non ho ricevuto nulla entro il timeout")
 
     bin_list = lista_bidoni = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
-    
 
-    return render_template("dashboard.html", inserviente = inserviente, bin_list = bin_list)
+    return render_template("dashboard.html", inserviente=inserviente, bin_list=bin_list)
+
+
+@app.route("/maps")
+def maps():
+    if "user_id" not in session:
+        return redirect(url_for('login'))
+
+    inserviente = Inserviente.query.get(session['user_id'])
+    bin_list = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
+
+    test_coords = [
+        (44.6501, 10.9215),
+        (44.6510, 10.9220),
+        (44.6498, 10.9200)
+    ]
+
+    bin_dicts = []
+    for i, binCoords in enumerate(bin_list):
+        lat, lon = test_coords[i % len(test_coords)]
+        bin_dicts.append({
+            "id": binCoords.id,
+            "weight": binCoords.weight,
+            "distance": binCoords.distance,
+            "floor": binCoords.floor,
+            "is_full": binCoords.is_full,
+            "latitude": lat,
+            "longitude": lon
+        })
+
+    return render_template("maps.html", bin_list=bin_dicts)
+
+
+@app.route("/update_bins", methods=['POST'])
+def update_bins():
+    bins_data = {
+        "bins": [
+            {"id": 1, "status": "Pieno"},
+            {"id": 2, "status": "Vuoto"},
+            {"id": 3, "status": "Quasi Pieno"},
+        ]
+    }
+
+    return jsonify(bins_data)
+
 
 with app.app_context():
     db.create_all()

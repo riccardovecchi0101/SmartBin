@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-	<h1 class="title">Benvenuto, {{ inserviente.username }}!</h1>
+    <h1 class="title">Benvenuto, {{ inserviente.username }}!</h1>
 
     <div class="container is-fluid">
         <div class="box">
@@ -14,33 +14,34 @@
     <div class="container is-fluid mt-4">
         <h1 class="title"> Your Bins: </h1>
         {% for bin in bin_list %}
-        <div class="card has-background-primary-light shadow">
-            <header class="card-header">
-            <p class="card-header-title">Bin number: {{bin.id}}</p>
-            <button class="card-header-icon" aria-label="more options">
+            <div class="card has-background-primary-light shadow">
+                <header class="card-header">
+                    <p class="card-header-title">Bin number: {{ bin.id }}</p>
+                    <button class="card-header-icon" aria-label="more options">
                 <span class="icon">
                 <i class="fas fa-angle-down" aria-hidden="true"></i>
                 </span>
-            </button>
-            </header>
-            <div class="card-content">
-            <div class="content">
-                <h3 class="subtitle"> Fulness:</h3>
-                <progress class="progress is-warning" value="75" max="100"> <!-- qua ci va una formula di qualche tipo-->
-                </progress>
+                    </button>
+                </header>
+                <div class="card-content">
+                    <div class="content">
+                        <h3 class="subtitle"> Fulness:</h3>
+                        <progress class="progress is-warning" value="75" max="100">
+                            <!-- qua ci va una formula di qualche tipo-->
+                        </progress>
+                    </div>
+                </div>
+                <footer class="card-footer">
+                    <a href="#"
+                       class="card-footer-item show-modal"
+                       data-id="{{ bin.id }}"
+                       data-weight="{{ bin.weight }}"
+                       data-floor="{{ bin.floor }}"
+                       data-distance="{{ bin.distance }}"
+                       data-isfull="{{ bin.is_full }}"
+                    >Info</a>
+                </footer>
             </div>
-            </div>
-            <footer class="card-footer">
-                <a href="#"
-                    class="card-footer-item show-modal"
-                    data-id="{{ bin.id }}"
-                    data-weight="{{ bin.weight }}"
-                    data-floor="{{ bin.floor }}"
-                    data-distance="{{ bin.distance }}"
-                    data-isfull="{{ bin.is_full }}"
-                >Info</a>
-            </footer>
-        </div>
         {% endfor %}
     </div>
 
@@ -48,48 +49,45 @@
     <div class="modal" id="infoModal">
         <div class="modal-background"></div>
         <div class="modal-card">
-          <header class="modal-card-head">
-            <p class="modal-card-title">Bin Info</p>
-            <button class="delete" aria-label="close"></button>
-          </header>
-          <section class="modal-card-body">
-            <p><strong>ID:</strong> <span id="modal-bin-id"></span></p>
-            <p><strong>Weight</strong> <span id="modal-bin-weight"></span>%</p>
-            <p><strong>Floor:</strong> <span id="modal-bin-floor"></span></p>
-            <p><strong>Distance:</strong> <span id="modal-bin-distance"></span></p>
-            <p><strong>IsFull:</strong>:</strong> <span id="modal-bin-is_full"></span></p>
-          </section>
-          <footer class="modal-card-foot">
-            <button class="button is-success">OK</button>
-          </footer>
+            <header class="modal-card-head">
+                <p class="modal-card-title">Bin Info</p>
+                <button class="delete" aria-label="close"></button>
+            </header>
+            <section class="modal-card-body">
+                <p><strong>ID:</strong> <span id="modal-bin-id"></span></p>
+                <p><strong>Weight</strong> <span id="modal-bin-weight"></span>%</p>
+                <p><strong>Floor:</strong> <span id="modal-bin-floor"></span></p>
+                <p><strong>Distance:</strong> <span id="modal-bin-distance"></span></p>
+                <p><strong>IsFull:</strong> <span id="modal-bin-is_full"></span></p>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-success">OK</button>
+            </footer>
         </div>
-      </div>
-      
-{% endblock %}
+    </div>
 
-{% block scripts %}
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const modal = document.getElementById('infoModal');
-      const closeButtons = modal.querySelectorAll('.delete, .modal-background, .modal-card-foot button');
-    
-      document.querySelectorAll('.show-modal').forEach(button => {
-        button.addEventListener('click', () => {
-          document.getElementById('modal-bin-id').textContent = button.dataset.id;
-          document.getElementById('modal-bin-weight').textContent = button.dataset.weight;
-          document.getElementById('modal-bin-floor').textContent = button.dataset.floor;
-          document.getElementById('modal-bin-distance').textContent = button.dataset.distance;
-          document.getElementById('modal-bin-is_full').textContent = button.dataset.isfull;
-          modal.classList.add('is-active');
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('infoModal');
+            const closeButtons = modal.querySelectorAll('.delete, .modal-background, .modal-card-foot button');
+
+            document.querySelectorAll('.show-modal').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.getElementById('modal-bin-id').textContent = button.dataset.id;
+                    document.getElementById('modal-bin-weight').textContent = button.dataset.weight;
+                    document.getElementById('modal-bin-floor').textContent = button.dataset.floor;
+                    document.getElementById('modal-bin-distance').textContent = button.dataset.distance;
+                    document.getElementById('modal-bin-is_full').textContent = button.dataset.isfull;
+                    modal.classList.add('is-active');
+                });
+            });
+
+            closeButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modal.classList.remove('is-active');
+                });
+            });
         });
-      });
-    
-      closeButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          modal.classList.remove('is-active');
-        });
-      });
-    });
     </script>
 {% endblock %}

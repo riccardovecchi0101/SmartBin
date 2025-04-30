@@ -2,6 +2,7 @@ import paho.mqtt.client as mqtt
 import time
 import uuid
 
+
 def receive_message(topic, timeout_sec=5):
     messaggio = None
     ricevuto = False

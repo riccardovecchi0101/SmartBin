@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+
 db = SQLAlchemy()
 
 
@@ -20,7 +21,8 @@ class Inserviente(db.Model):
 
     def __repr__(self):
         return f"<Inserviente {self.name}, >" + ":" + " " + "UUID:" + self.uuid
-    
+
+
 class Bidone(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement = False)
     inserviente_id = db.Column(db.Integer, db.ForeignKey('inserviente.id'), nullable=True)

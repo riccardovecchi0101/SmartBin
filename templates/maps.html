@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class="title">Mappa Cestini</h1>
+
+    <div id="map" style="height: 500px"></div>
+
+    <script>
+        window.binsFromServer = {{ bin_list | tojson }};
+    </script>
+
+    <script src="{{ url_for('static', filename='js/maps.js') }}"></script>
+{% endblock %}
