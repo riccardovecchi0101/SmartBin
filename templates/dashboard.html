@@ -14,7 +14,7 @@
     <div class="container is-fluid mt-4">
         <h1 class="title"> Your Bins: </h1>
         {% for bin in bin_list %}
-            <div class="card has-background-primary-light shadow">
+            <div class="card custom-bin-card shadow" data-id="{{ bin.id }}">
                 <header class="card-header">
                     <p class="card-header-title">Bin number: {{ bin.id }}</p>
                     <button class="card-header-icon" aria-label="more options">
@@ -26,8 +26,15 @@
                 <div class="card-content">
                     <div class="content">
                         <h3 class="subtitle"> Fulness:</h3>
-                        <progress class="progress is-warning" value="75" max="100">
-                            <!-- qua ci va una formula di qualche tipo-->
+                        <strong class="percent-label">{{ bin.weight | int }}%</strong>
+                        <progress class="progress
+                            {% if bin.weight|int < 40 %}
+                                is-success
+                            {% elif bin.weight|int < 70 %}
+                                is-warning
+                            {% else %}
+                                is-danger
+                            {% endif %}" value="{{ bin.weight | int }}" max="100" data-id="{{ bin.id }}">
                         </progress>
                     </div>
                 </div>
@@ -66,7 +73,7 @@
         </div>
     </div>
 
-
+    <script src="{{ url_for('static', filename='js/refreshBins.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('infoModal');

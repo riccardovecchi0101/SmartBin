@@ -153,6 +153,54 @@ def dashboard():
     return render_template("dashboard.html", inserviente=inserviente, bin_list=bin_list)
 
 
+@app.route("/refresh_bins", methods=['GET'])
+def refresh_bins():
+    if "user_id" not in session:
+        return jsonify({"error": "Non autorizzato"}), 401
+
+    print(f"User ID: {session.get('user_id')}")
+
+    inserviente = Inserviente.query.get(session['user_id'])
+    topic = f"{inserviente.uuid}/test2"
+    message = receive_message(topic=topic)
+
+    if message:
+        payload_dict = json.loads(message)
+        bidone_id = int(payload_dict['id'])
+        bin = Bidone.query.filter(
+            Bidone.inserviente_id == inserviente.id,
+            Bidone.id == bidone_id
+        ).first()
+
+        if bin:
+            bin.floor = payload_dict['floor']
+            bin.weight = payload_dict['weight']
+            bin.distance = payload_dict['distance']
+            bin.is_full = payload_dict['is_full']
+        else:
+            bin = Bidone(
+                id=bidone_id,
+                inserviente=inserviente,
+                floor=payload_dict['floor'],
+                weight=payload_dict['weight'],
+                distance=payload_dict['distance'],
+                is_full=payload_dict['is_full']
+            )
+            db.session.add(bin)
+        db.session.commit()
+
+    bin_list = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
+    bin_data = [{
+        "id": b.id,
+        "weight": b.weight,
+        "distance": b.distance,
+        "floor": b.floor,
+        "is_full": b.is_full
+    } for b in bin_list]
+
+    return jsonify(bin_data)
+
+
 @app.route("/maps")
 def maps():
     if "user_id" not in session:
@@ -161,24 +209,15 @@ def maps():
     inserviente = Inserviente.query.get(session['user_id'])
     bin_list = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
 
-    test_coords = [
-        (44.6501, 10.9215),
-        (44.6510, 10.9220),
-        (44.6498, 10.9200)
-    ]
-
-    bin_dicts = []
-    for i, binCoords in enumerate(bin_list):
-        lat, lon = test_coords[i % len(test_coords)]
-        bin_dicts.append({
-            "id": binCoords.id,
-            "weight": binCoords.weight,
-            "distance": binCoords.distance,
-            "floor": binCoords.floor,
-            "is_full": binCoords.is_full,
-            "latitude": lat,
-            "longitude": lon
-        })
+    bin_dicts = [{
+        "id": b.id,
+        "weight": b.weight,
+        "distance": b.distance,
+        "floor": b.floor,
+        "is_full": b.is_full,
+        "latitude": b.latitude,
+        "longitude": b.longitude
+    } for b in bin_list if b.latitude is not None and b.longitude is not None]
 
     return render_template("maps.html", bin_list=bin_dicts)
 
