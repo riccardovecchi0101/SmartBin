@@ -13,7 +13,7 @@ function refreshBins() {
                     const fullValue = Math.min(100, Math.round((bin.weight / 20) * 100));
 
                     if (progress) {
-                        progress.value = fullValue;
+                        animateProgress(progress, fullValue);
                         progress.max = 100;
 
                         // Aggiorna colore barra
@@ -45,4 +45,25 @@ function refreshBins() {
             console.log("Dati aggiornati via AJAX:", data);
         }
     });
+}
+
+
+
+function animateProgress(progressEl, targetValue) {
+    const current = parseFloat(progressEl.value) || 0;
+    const step = (targetValue - current) / 20;
+    let progress = current;
+    let frame = 0;
+
+    const interval = setInterval(() => {
+        progress += step;
+        frame++;
+
+        progressEl.value = Math.min(Math.max(progress, 0), 100);
+
+        if (frame >= 20) {
+            progressEl.value = targetValue; 
+            clearInterval(interval);
+        }
+    }, 20); 
 }
