@@ -6,14 +6,15 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_migrate import Migrate
 
 from models import *
-from loader import receive_message
+from loader import receive_message, send_anomaly
 
 secret_key = secrets.token_hex(16)  # good for develop, bad for production (ma stica)
 
-app = Flask("SmartBin")
+app = Flask("mainApp")
 app.config['SECRET_KEY'] = secret_key
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -131,6 +132,8 @@ def dashboard():
             bin.weight = payload_dict['weight']
             bin.distance = payload_dict['distance']
             bin.is_full = payload_dict['is_full']
+            bin.latitude = payload_dict['latitude']
+            bin.longitude= payload_dict['longitude']
 
         else:
             bin = Bidone(
@@ -139,11 +142,28 @@ def dashboard():
                 floor=payload_dict['floor'],
                 weight=payload_dict['weight'],
                 distance=payload_dict['distance'],
-                is_full=payload_dict['is_full']
+                is_full=payload_dict['is_full'],
+                latitude=payload_dict['latitude'],
+                longitude = payload_dict['longitude']
             )
             db.session.add(bin)
 
         db.session.commit()
+
+
+        anomaly_topic = str(inserviente.uuid) + str(bin.id)+'/anomaly'
+
+        if bin.weight is None or bin.distance is None:
+            print("segnalo anomalia")
+            send_anomaly(anomaly_topic, "Nessun valore misurato")
+
+        if (float(bin.weight) > 15 and float(bin.distance) > 30) or (float(bin.weight) < 5 and float(bin.distance) < 60):
+            print("segnalo anomalia")
+            send_anomaly(anomaly_topic, "Valori misurati inconsistenti. Controllare il bidone") 
+        
+        if float(bin.weight) > 18 and float(bin.distance) < 20:
+            print("segnalo anomalia")
+            send_anomaly(anomaly_topic, "Bidone pieno")
 
     else:
         print("Non ho ricevuto nulla entro il timeout")
@@ -177,6 +197,8 @@ def refresh_bins():
             bin.weight = payload_dict['weight']
             bin.distance = payload_dict['distance']
             bin.is_full = payload_dict['is_full']
+            bin.latitude = payload_dict['latitude']
+            bin.longitude= payload_dict['longitude']
         else:
             bin = Bidone(
                 id=bidone_id,
@@ -184,10 +206,26 @@ def refresh_bins():
                 floor=payload_dict['floor'],
                 weight=payload_dict['weight'],
                 distance=payload_dict['distance'],
-                is_full=payload_dict['is_full']
+                is_full=payload_dict['is_full'],
+                latitude = payload_dict['latitude'],
+                longitude= payload_dict['longitude'],
             )
+
             db.session.add(bin)
-        db.session.commit()
+            db.session.commit()
+
+            anomaly_topic = str(inserviente.uuid) + str(bin.id)+'/test2'
+            if bin.weight is None or bin.distance is None:
+                print("segnalo anomalia")
+                send_anomaly(anomaly_topic, "Nessun valore misurato")
+
+            if (bin.weight > 15 and bin.distance > 30) or (bin.weight < 5 and bin.distance < 60):
+                print("segnalo anomalia")
+                send_anomaly(anomaly_topic, "Valori misurati inconsistenti. Controllare il bidone") 
+            
+            if bin.weight > 18 and bin.distance < 20:
+                print("segnalo anomalia")
+                send_anomaly(anomaly_topic, "Bidone pieno")
 
     bin_list = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
     bin_data = [{

@@ -27,15 +27,7 @@
                     <div class="content">
                         <h3 class="subtitle"> Fulness:</h3>
                         <strong class="percent-label">{{ bin.weight | int }}%</strong>
-                        <progress class="progress
-                            {% if bin.weight|int < 40 %}
-                                is-success
-                            {% elif bin.weight|int < 70 %}
-                                is-warning
-                            {% else %}
-                                is-danger
-                            {% endif %}" value="{{ bin.weight | int }}" max="100" data-id="{{ bin.id }}">
-                        </progress>
+                        <progress class="progress" value="0" max="100" data-id="{{ bin.id }}"></progress>
                     </div>
                 </div>
                 <footer class="card-footer">
@@ -50,6 +42,7 @@
                 </footer>
             </div>
         {% endfor %}
+        
     </div>
 
 
@@ -62,7 +55,7 @@
             </header>
             <section class="modal-card-body">
                 <p><strong>ID:</strong> <span id="modal-bin-id"></span></p>
-                <p><strong>Weight</strong> <span id="modal-bin-weight"></span>%</p>
+                <p><strong>Weight</strong> <span id="modal-bin-weight"></span>kg</p>
                 <p><strong>Floor:</strong> <span id="modal-bin-floor"></span></p>
                 <p><strong>Distance:</strong> <span id="modal-bin-distance"></span></p>
                 <p><strong>IsFull:</strong> <span id="modal-bin-is_full"></span></p>
@@ -73,11 +66,24 @@
         </div>
     </div>
 
+    <div class="container is-fluid mt-6">
+      <div class="columns is-centered">
+          <button class="button is-large is-success is-light" id="refresher">
+           Refresh
+          </button>
+      </div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/refreshBins.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+
             const modal = document.getElementById('infoModal');
             const closeButtons = modal.querySelectorAll('.delete, .modal-background, .modal-card-foot button');
+            const refresher = document.getElementById('refresher');
+            refresher.addEventListener('click', () => {
+                refreshBins(); 
+            });
 
             document.querySelectorAll('.show-modal').forEach(button => {
                 button.addEventListener('click', () => {
@@ -96,5 +102,7 @@
                 });
             });
         });
+
+        refreshBins();
     </script>
 {% endblock %}

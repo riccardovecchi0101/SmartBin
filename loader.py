@@ -3,6 +3,37 @@ import time
 import uuid
 
 
+def send_anomaly(topic,  message, timeout_sec=5):
+
+    segnalato = False
+
+    def on_connect(client, userdata, flags, rc):
+        if rc == 0:
+            print("Connesso al broker")
+            client.subscribe(topic)
+        else:
+            print(f"Connessione fallita. Codice: {rc}")
+
+        client.publish(topic, message, retain=True) 
+
+    def on_publish(client, userdata, mid):
+        print("Anomalia segnalata al topic: "+str(topic))
+        segnalato = True
+        client.disconnect()
+
+    client = mqtt.Client(client_id="server", protocol=mqtt.MQTTv311)
+    client.on_connect = on_connect
+    client.on_publish = on_publish
+
+   
+    client.connect("test.mosquitto.org", 1883, 60)
+    client.loop_start()
+
+    time.sleep(0.2)
+
+    client.loop_stop()
+    
+
 def receive_message(topic, timeout_sec=5):
     messaggio = None
     ricevuto = False
