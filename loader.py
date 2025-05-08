@@ -3,8 +3,7 @@ import time
 import uuid
 
 
-def send_anomaly(topic,  message, timeout_sec=5):
-
+def send_anomaly(topic, message, timeout_sec=5):
     segnalato = False
 
     def on_connect(client, userdata, flags, rc):
@@ -14,10 +13,10 @@ def send_anomaly(topic,  message, timeout_sec=5):
         else:
             print(f"Connessione fallita. Codice: {rc}")
 
-        client.publish(topic, message, retain=True) 
+        client.publish(topic, message, retain=True)
 
     def on_publish(client, userdata, mid):
-        print("Anomalia segnalata al topic: "+str(topic))
+        print("Anomalia segnalata al topic: " + str(topic))
         segnalato = True
         client.disconnect()
 
@@ -25,14 +24,13 @@ def send_anomaly(topic,  message, timeout_sec=5):
     client.on_connect = on_connect
     client.on_publish = on_publish
 
-   
     client.connect("test.mosquitto.org", 1883, 60)
     client.loop_start()
 
     time.sleep(0.2)
 
     client.loop_stop()
-    
+
 
 def receive_message(topic, timeout_sec=5):
     messaggio = None
@@ -49,7 +47,7 @@ def receive_message(topic, timeout_sec=5):
         nonlocal messaggio, ricevuto
         messaggio = msg.payload.decode()
         ricevuto = True
-        print(f"📨 Ricevuto messaggio: {messaggio}")
+        print(f"Ricevuto messaggio: {messaggio}")
         client.disconnect()  # Disconnessione immediata dopo aver ricevuto
 
     client_id = f"loader-{uuid.uuid4()}"

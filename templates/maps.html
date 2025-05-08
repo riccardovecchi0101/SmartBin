@@ -1,13 +1,40 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1 class="title">Mappa Cestini</h1>
+    <div class="map-container">
+        <div class="map-panel">
+            <h2 class="subtitle">Cestini Pieni</h2>
+            <ul id="bin-list" class="bin-list"></ul>
 
-    <div id="map" style="height: 500px"></div>
+            <div class="legend">
+                <h2 class="subtitle">Legenda</h2>
+                <p>
+                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"
+                         width="20"> = Cestino pieno
+                </p>
+                <p>
+                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"
+                         width="20"> = Cestino vuoto
+                </p>
+            </div>
+
+            <div class="route-info">
+                <h2 class="subtitle">Percorso consigliato</h2>
+                <p id="route-distance">Distanza: --</p>
+                <p id="route-duration">Durata: --</p>
+            </div>
+        </div>
+
+        <div class="map-wrapper">
+            <div id="map"></div>
+        </div>
+
+    </div>
 
     <script>
         window.binsFromServer = {{ bin_list | tojson }};
     </script>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='js/maps.js') }}"></script>
 {% endblock %}
