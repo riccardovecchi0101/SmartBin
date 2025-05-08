@@ -240,7 +240,7 @@ def refresh_bins():
                 "messaggio": f"Raggiungi il cestino {nearest_bins.id}"
             })
             topic_lcd = f"{inserviente.uuid}/test2"
-            # publish_message(topic_lcd, msg)
+            send_anomaly(topic_lcd, msg)
 
         anomaly_topic = str(inserviente.uuid) + str(bin.id) + '/test2'
         if bin.weight is None or bin.distance is None:
