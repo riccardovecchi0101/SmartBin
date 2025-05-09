@@ -5,7 +5,6 @@ import threading
 
 import time
 
-
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_migrate import Migrate
 

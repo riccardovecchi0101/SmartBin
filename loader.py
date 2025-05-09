@@ -5,7 +5,6 @@ from flask import current_app
 
 
 def mqtt_listener(app):
-
     def on_connect(client, userdata, flags, rc):
         print(f" Connesso al broker (code {rc})")
         if rc == 0:
@@ -42,7 +41,7 @@ def mqtt_listener(app):
                     bidone.longitude = payload['longitude']
                     bidone.tipo = payload['tipo']
                     bidone.edificio = payload['edificio']
-                    bidone.fulness=payload['fulness']
+                    bidone.fulness = payload['fulness']
 
                 else:
                     bidone = Bidone(
@@ -62,12 +61,10 @@ def mqtt_listener(app):
                 db.session.commit()
                 print(f"Bidone {bidone.id} aggiornato")
 
-                ##CONTROLLO ANOMALIE##
+                # CONTROLLO ANOMALIE
 
                 weight = float(bidone.weight)
                 distance = float(bidone.distance)
-
-
 
                 anomaly = None
 
@@ -81,11 +78,8 @@ def mqtt_listener(app):
                     topic = f"{bidone.inserviente.uuid}/{bidone.id}/anomaly"
                     print(f" Pubblico anomalia: {anomaly} su {topic}")
                     client.publish(topic, anomaly, retain=True)
-
-
         except Exception as e:
             print(f"Errore nel processing del messaggio: {e}")
-
 
     client = mqtt.Client(client_id="server-listener")
 

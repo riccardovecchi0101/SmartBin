@@ -92,6 +92,6 @@ document.addEventListener("DOMContentLoaded", () => {
             map.fitBounds(route.getBounds());
         });
     } else {
-        alert("Geolocalizzazione non disponibile.");
+        console.log("Geolocalizzazione non disponibile.");
     }
 });
