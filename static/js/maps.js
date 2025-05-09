@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     bins.forEach(bin => {
         const latlng = [bin.latitude, bin.longitude];
-        const isFull = bin.weight > 18 && bin.distance < 20;
+        const isFull = bin.is_full;
 
         const icon = new L.Icon({
             iconUrl: isFull
