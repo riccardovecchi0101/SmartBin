@@ -1,12 +1,16 @@
 import secrets
 import paho
 import json
+import threading
+
+import time
+
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_migrate import Migrate
 
 from models import *
-from loader import receive_message, send_anomaly
+from loader import  mqtt_listener
 
 secret_key = secrets.token_hex(16)  # good for develop, bad for production (ma stica)
 
@@ -33,7 +37,6 @@ def index():
 @app.errorhandler(404)
 def handle_404(e):
     return home()
-
 
 @app.route("/firstAccess", methods=['GET', 'POST'])
 def firstAccess():
@@ -115,59 +118,6 @@ def dashboard():
         return redirect(url_for('login'))
 
     inserviente = Inserviente.query.get(session['user_id'])
-
-    topic = str(inserviente.uuid) + '/test2'
-    message = receive_message(topic=topic)
-
-    if message is not None:
-        payload_dict = json.loads(message)  # Converti di nuovo in dizionario
-        bidone_id = int(payload_dict['id'])
-        bin = Bidone.query.filter(
-            Bidone.inserviente_id == inserviente.id,
-            Bidone.id == bidone_id
-        ).first()
-
-        if bin:
-            bin.floor = payload_dict['floor']
-            bin.weight = payload_dict['weight']
-            bin.distance = payload_dict['distance']
-            bin.is_full = payload_dict['is_full']
-            bin.latitude = payload_dict['latitude']
-            bin.longitude= payload_dict['longitude']
-
-        else:
-            bin = Bidone(
-                id=bidone_id,
-                inserviente=inserviente,
-                floor=payload_dict['floor'],
-                weight=payload_dict['weight'],
-                distance=payload_dict['distance'],
-                is_full=payload_dict['is_full'],
-                latitude=payload_dict['latitude'],
-                longitude = payload_dict['longitude']
-            )
-            db.session.add(bin)
-
-        db.session.commit()
-
-
-        anomaly_topic = str(inserviente.uuid) + str(bin.id)+'/anomaly'
-
-        if bin.weight is None or bin.distance is None:
-            print("segnalo anomalia")
-            send_anomaly(anomaly_topic, "Nessun valore misurato")
-
-        if (float(bin.weight) > 15 and float(bin.distance) > 30) or (float(bin.weight) < 5 and float(bin.distance) < 60):
-            print("segnalo anomalia")
-            send_anomaly(anomaly_topic, "Valori misurati inconsistenti. Controllare il bidone") 
-        
-        if float(bin.weight) > 18 and float(bin.distance) < 20:
-            print("segnalo anomalia")
-            send_anomaly(anomaly_topic, "Bidone pieno")
-
-    else:
-        print("Non ho ricevuto nulla entro il timeout")
-
     bin_list = lista_bidoni = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
 
     return render_template("dashboard.html", inserviente=inserviente, bin_list=bin_list)
@@ -178,62 +128,17 @@ def refresh_bins():
     if "user_id" not in session:
         return jsonify({"error": "Non autorizzato"}), 401
 
-    print(f"User ID: {session.get('user_id')}")
-
     inserviente = Inserviente.query.get(session['user_id'])
-    topic = f"{inserviente.uuid}/test2"
-    message = receive_message(topic=topic)
-
-    if message:
-        payload_dict = json.loads(message)
-        bidone_id = int(payload_dict['id'])
-        bin = Bidone.query.filter(
-            Bidone.inserviente_id == inserviente.id,
-            Bidone.id == bidone_id
-        ).first()
-
-        if bin:
-            bin.floor = payload_dict['floor']
-            bin.weight = payload_dict['weight']
-            bin.distance = payload_dict['distance']
-            bin.is_full = payload_dict['is_full']
-            bin.latitude = payload_dict['latitude']
-            bin.longitude= payload_dict['longitude']
-        else:
-            bin = Bidone(
-                id=bidone_id,
-                inserviente=inserviente,
-                floor=payload_dict['floor'],
-                weight=payload_dict['weight'],
-                distance=payload_dict['distance'],
-                is_full=payload_dict['is_full'],
-                latitude = payload_dict['latitude'],
-                longitude= payload_dict['longitude'],
-            )
-
-            db.session.add(bin)
-            db.session.commit()
-
-            anomaly_topic = str(inserviente.uuid) + str(bin.id)+'/test2'
-            if bin.weight is None or bin.distance is None:
-                print("segnalo anomalia")
-                send_anomaly(anomaly_topic, "Nessun valore misurato")
-
-            if (bin.weight > 15 and bin.distance > 30) or (bin.weight < 5 and bin.distance < 60):
-                print("segnalo anomalia")
-                send_anomaly(anomaly_topic, "Valori misurati inconsistenti. Controllare il bidone") 
-            
-            if bin.weight > 18 and bin.distance < 20:
-                print("segnalo anomalia")
-                send_anomaly(anomaly_topic, "Bidone pieno")
-
     bin_list = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
+
     bin_data = [{
         "id": b.id,
         "weight": b.weight,
         "distance": b.distance,
-        "floor": b.floor,
-        "is_full": b.is_full
+        "tipo": b.tipo,
+        "edificio": b.edificio,
+        "is_full": b.is_full,
+        "fulness": b.fulness 
     } for b in bin_list]
 
     return jsonify(bin_data)
@@ -259,22 +164,12 @@ def maps():
 
     return render_template("maps.html", bin_list=bin_dicts)
 
-
-@app.route("/update_bins", methods=['POST'])
-def update_bins():
-    bins_data = {
-        "bins": [
-            {"id": 1, "status": "Pieno"},
-            {"id": 2, "status": "Vuoto"},
-            {"id": 3, "status": "Quasi Pieno"},
-        ]
-    }
-
-    return jsonify(bins_data)
-
-
-with app.app_context():
-    db.create_all()
-
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+
+        t = threading.Thread(target=mqtt_listener, args=(app,))
+        t.daemon = True
+        t.start()
+
     app.run(debug=True)

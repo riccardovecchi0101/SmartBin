@@ -10,7 +10,7 @@ function refreshBins() {
                     const progress = card.querySelector("progress");
                     const percentLabel = card.querySelector(".percent-label");
 
-                    const fullValue = Math.min(100, Math.round((bin.weight / 20) * 100));
+                    const fullValue = bin.fulness;
 
                     if (progress) {
                         animateProgress(progress, fullValue);
@@ -31,13 +31,13 @@ function refreshBins() {
                         percentLabel.textContent = `${fullValue}%`;
                     }
 
-                    // Aggiorna dati del bottone "info"
                     const infoBtn = card.querySelector(".show-modal");
                     if (infoBtn) {
                         infoBtn.dataset.weight = bin.weight;
-                        infoBtn.dataset.floor = bin.floor;
                         infoBtn.dataset.distance = bin.distance;
                         infoBtn.dataset.isFull = bin.isFull;
+                        infoBtn.dataset.edificio = bin.edificio;
+                        infoBtn.dataset.tipo = bin.tipo;
                     }
                 }
             });
