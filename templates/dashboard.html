@@ -32,13 +32,14 @@
                 </div>
                 <footer class="card-footer">
                     <a href="#"
-                       class="card-footer-item show-modal"
-                       data-id="{{ bin.id }}"
-                       data-weight="{{ bin.weight }}"
-                       data-floor="{{ bin.floor }}"
-                       data-distance="{{ bin.distance }}"
-                       data-isfull="{{ bin.is_full }}"
-                    >Info</a>
+                    class="card-footer-item show-modal"
+                    data-id="{{ bin.id }}"
+                    data-weight="{{ bin.weight }}"
+                    data-distance="{{ bin.distance }}"
+                    data-isfull="{{ bin.is_full }}"
+                    data-tipo="{{ bin.tipo }}"
+                    data-edificio="{{ bin.edificio }}"
+                 >Info</a>
                 </footer>
             </div>
         {% endfor %}
@@ -55,23 +56,16 @@
             </header>
             <section class="modal-card-body">
                 <p><strong>ID:</strong> <span id="modal-bin-id"></span></p>
-                <p><strong>Weight</strong> <span id="modal-bin-weight"></span>kg</p>
-                <p><strong>Floor:</strong> <span id="modal-bin-floor"></span></p>
+                <p><strong>Weight:</strong> <span id="modal-bin-weight"></span>kg</p>
                 <p><strong>Distance:</strong> <span id="modal-bin-distance"></span>cm</p>
                 <p><strong>IsFull:</strong> <span id="modal-bin-is_full"></span></p>
+                <p><strong>Type:</strong><span id="modal-type"></span></p>
+                <p><strong>Edificio:</strong><span id="modal-edificio"></span></p>
             </section>
             <footer class="modal-card-foot">
                 <button class="button is-success">OK</button>
             </footer>
         </div>
-    </div>
-
-    <div class="container is-fluid mt-6">
-      <div class="columns is-centered">
-          <button class="button is-large is-success is-light" id="refresher">
-           Refresh
-          </button>
-      </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/refreshBins.js') }}"></script>
@@ -80,18 +74,15 @@
 
             const modal = document.getElementById('infoModal');
             const closeButtons = modal.querySelectorAll('.delete, .modal-background, .modal-card-foot button');
-            const refresher = document.getElementById('refresher');
-            refresher.addEventListener('click', () => {
-                refreshBins(); 
-            });
 
             document.querySelectorAll('.show-modal').forEach(button => {
                 button.addEventListener('click', () => {
                     document.getElementById('modal-bin-id').textContent = button.dataset.id;
                     document.getElementById('modal-bin-weight').textContent = button.dataset.weight;
-                    document.getElementById('modal-bin-floor').textContent = button.dataset.floor;
                     document.getElementById('modal-bin-distance').textContent = button.dataset.distance;
                     document.getElementById('modal-bin-is_full').textContent = button.dataset.isfull;
+                    document.getElementById('modal-type').textContent = button.dataset.tipo;
+                    document.getElementById('modal-edificio').textContent = button.dataset.edificio;
                     modal.classList.add('is-active');
                 });
             });
@@ -104,6 +95,7 @@
         });
 
         refreshBins();
+        setInterval(refreshBins, 20000);
     </script>
 {% endblock %}
 

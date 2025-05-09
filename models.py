@@ -27,12 +27,14 @@ class Bidone(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=False)
     inserviente_id = db.Column(db.Integer, db.ForeignKey('inserviente.id'), nullable=True)
     inserviente = db.relationship('Inserviente', backref=db.backref('bidoni', lazy=True))
-    floor = db.Column(db.String(15), unique=False, nullable=True)
     weight = db.Column(db.String(15), unique=False, nullable=True)
     distance = db.Column(db.String(15), unique=False, nullable=True)
     is_full = db.Column(db.Boolean, unique=False, nullable=True)
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
+    fulness = db.Column(db.Integer, nullable=True)
+    tipo = db.Column(db.String(20), nullable=True)
+    edificio = db.Column(db.String(50), nullable=True)
 
     def __repr_(self):
         return f"Bidone: {self.id}, Gestito da: {self.inserviente}"
