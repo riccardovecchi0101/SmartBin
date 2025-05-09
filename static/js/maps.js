@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
         marker.bindPopup(`
             <div>
                 <strong>Cestino #${bin.id}</strong><br>
-                <b>Piano:</b> ${bin.floor}<br>
                 <b>Peso:</b> ${bin.weight} Kg<br>
                 <b>Distanza:</b> ${bin.distance} cm<br>
                 <b>Stato:</b> ${isFull ? "Pieno" : "Vuoto"}

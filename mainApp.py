@@ -155,7 +155,6 @@ def maps():
         "id": b.id,
         "weight": b.weight,
         "distance": b.distance,
-        "floor": b.floor,
         "is_full": b.is_full,
         "latitude": b.latitude,
         "longitude": b.longitude
