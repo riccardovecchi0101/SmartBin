@@ -128,16 +128,18 @@ def refresh_bins():
         return jsonify({"error": "Non autorizzato"}), 401
 
     inserviente = Inserviente.query.get(session['user_id'])
-    bin_list = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
+    bin_list = lista_bidoni = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
 
     bin_data = [{
         "id": b.id,
         "weight": b.weight,
         "distance": b.distance,
-        "tipo": b.tipo,
-        "edificio": b.edificio,
         "is_full": b.is_full,
-        "fulness": b.fulness
+        "latitude": b.latitude,
+        "longitude": b.longitude,
+        "fulness": b.fulness,
+        "tipo": b.tipo,
+        "edificio": b.edificio
     } for b in bin_list]
 
     return jsonify(bin_data)
@@ -157,7 +159,10 @@ def maps():
         "distance": b.distance,
         "is_full": b.is_full,
         "latitude": b.latitude,
-        "longitude": b.longitude
+        "longitude": b.longitude,
+        "fulness": b.fulness,
+        "tipo": b.tipo,
+        "edificio": b.edificio
     } for b in bin_list if b.latitude is not None and b.longitude is not None]
 
     return render_template("maps.html", bin_list=bin_dicts)

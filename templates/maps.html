@@ -16,12 +16,31 @@
                     <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"
                          width="20"> = Cestino vuoto
                 </p>
+                <p>
+                    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"
+                         width="20"/> = Posizione utente<br>
+                </p>
+                <p>
+                    <span style="color: blue;">■</span> Percorso a piedi
+                </p>
+                <p>
+                    <span style="color: orange;">■</span> Percorso in auto
+                </p>
             </div>
 
             <div class="route-info">
-                <h2 class="subtitle">Percorso consigliato</h2>
-                <p id="route-distance">Distanza: --</p>
-                <p id="route-duration">Durata: --</p>
+                <h2 class="subtitle">🚶 Percorso a piedi</h2>
+                <p id="route-distance-foot">Distanza: --</p>
+                <p id="route-duration-foot">Durata: --</p>
+                <br>
+                <h2 class="subtitle">🚗 Percorso in auto</h2>
+                <p id="route-distance-car">Distanza: --</p>
+                <p id="route-duration-car">Durata: --</p>
+            </div>
+
+            <div class="next-bio-info" style="margin-top: 1rem;">
+                <h2 class="subtitle">🧭 Ordine consigliato</h2>
+                <ol id="next-bin-info">--</ol>
             </div>
         </div>
 
@@ -35,5 +54,6 @@
     </script>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-polylinedecorator/dist/leaflet.polylineDecorator.min.js"></script>
     <script src="{{ url_for('static', filename='js/maps.js') }}"></script>
 {% endblock %}
