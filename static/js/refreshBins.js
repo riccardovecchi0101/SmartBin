@@ -36,7 +36,7 @@ function refreshBins() {
                         infoBtn.dataset.weight = bin.weight;
                         infoBtn.dataset.distance = bin.distance;
                         infoBtn.dataset.isFull = bin.isFull;
-                        infoBtn.dataset.edificio = bin.edificio;
+                        infoBtn.dataset.citta = bin.citta;
                         infoBtn.dataset.tipo = bin.tipo;
                     }
                 }

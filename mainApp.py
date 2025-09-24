@@ -21,6 +21,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 migrate = Migrate(app, db)
 
+allowed_uid=["c530fed9-0c82-44a4-bc20-23d1891d2ff6"]
 
 @app.route("/")  # app route si riferisce direttamente alla funzione
 def home():
@@ -42,14 +43,19 @@ def firstAccess():
     if request.method == 'POST':
         uuid_input = request.form.get('uuid')
         inserviente = Inserviente.query.filter_by(uuid=uuid_input).first()
+        print(uuid_input)
 
-        if not inserviente:
+        if uuid_input not in allowed_uid:
             flash("UUID non valido!", "danger")
             return redirect(url_for('firstAccess'))
 
-        if inserviente.username:
+        if inserviente:
             flash("UUID già registrato. Effettua il login.", "warning")
             return redirect(url_for('login'))
+        
+        new_ins = Inserviente(uuid=uuid_input)
+        db.session.add(new_ins)
+        db.session.commit()
 
         return redirect(url_for('signup', uuid=uuid_input))
 
@@ -69,6 +75,7 @@ def signup():
         password = request.form.get('password')
         name = request.form.get('name')
         surname = request.form.get('surname')
+        citta = request.form.get("citta")
 
         if Inserviente.query.filter_by(username=username).first():
             flash("Username già in uso!", "danger")
@@ -78,6 +85,7 @@ def signup():
         inserviente.surname = surname
         inserviente.username = username
         inserviente.set_password(password)
+        inserviente.citta = citta 
         db.session.commit()
 
         flash("Registrazione completata.", "success")
@@ -117,7 +125,7 @@ def dashboard():
         return redirect(url_for('login'))
 
     inserviente = Inserviente.query.get(session['user_id'])
-    bin_list = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
+    bin_list = Bidone.query.filter(Bidone.citta == inserviente.citta).all()
 
     return render_template("dashboard.html", inserviente=inserviente, bin_list=bin_list)
 
@@ -128,7 +136,7 @@ def refresh_bins():
         return jsonify({"error": "Non autorizzato"}), 401
 
     inserviente = Inserviente.query.get(session['user_id'])
-    bin_list = lista_bidoni = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
+    bin_list = lista_bidoni = Bidone.query.filter(Bidone.citta == inserviente.citta).all()
 
     bin_data = [{
         "id": b.id,
@@ -139,7 +147,7 @@ def refresh_bins():
         "longitude": b.longitude,
         "fulness": b.fulness,
         "tipo": b.tipo,
-        "edificio": b.edificio
+        "citta":b.citta
     } for b in bin_list]
 
     return jsonify(bin_data)
@@ -151,7 +159,7 @@ def maps():
         return redirect(url_for('login'))
 
     inserviente = Inserviente.query.get(session['user_id'])
-    bin_list = Bidone.query.filter(Bidone.inserviente_id == inserviente.id).all()
+    bin_list = Bidone.query.filter(Bidone.citta== inserviente.citta).all()
 
     bin_dicts = [{
         "id": b.id,
@@ -162,18 +170,17 @@ def maps():
         "longitude": b.longitude,
         "fulness": b.fulness,
         "tipo": b.tipo,
-        "edificio": b.edificio
+        "citta":b.citta
     } for b in bin_list if b.latitude is not None and b.longitude is not None]
 
     return render_template("maps.html", bin_list=bin_dicts)
-
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
-        t = threading.Thread(target=mqtt_listener, args=(app,))
-        t.daemon = True
-        t.start()
+    t = threading.Thread(target=mqtt_listener, args=(app,))
+    t.daemon = True
+    t.start()
 
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)

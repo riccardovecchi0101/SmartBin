@@ -34,7 +34,61 @@
                 </div>
             </div>
 
+            <div class="field">
+                <label class="label">Provincia</label>
+                <div class="control">
+                  <div class="select">
+                    <select id="provincia" name="provincia" required>
+                      <option value="">Seleziona una provincia</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="field">
+                <label class="label">Città</label>
+                <div class="control">
+                  <div class="select">
+                    <select id="citta" name="citta" required>
+                      <option value="">Seleziona una città</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+
             <button class="button is-primary">Registrati</button>
         </form>
     </div>
+
+    <script>
+        fetch("{{ url_for('static', filename='data/comuni.json') }}")
+          .then(res => res.json())
+          .then(data => {
+            const province = [...new Set(data.map(c => c.provincia))]; // province uniche
+            const provSelect = document.getElementById("provincia");
+            const citySelect = document.getElementById("citta");
+        
+            // Popola province
+            province.forEach(p => {
+              const opt = document.createElement("option");
+              opt.value = p;
+              opt.textContent = p;
+              provSelect.appendChild(opt);
+            });
+        
+            // Al cambio provincia → popola città
+            provSelect.addEventListener("change", () => {
+              const prov = provSelect.value;
+              citySelect.innerHTML = '<option value="">Seleziona una città</option>';
+              data.filter(c => c.provincia === prov).forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = c.nome;
+                opt.textContent = c.nome;
+                citySelect.appendChild(opt);
+              });
+            });
+          });
+        </script>
+        
 {% endblock %}

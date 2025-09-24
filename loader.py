@@ -4,6 +4,7 @@ from models import db, Inserviente, Bidone
 from flask import current_app
 
 
+print("Starting MQTT listener...")
 def mqtt_listener(app):
     def on_connect(client, userdata, flags, rc):
         print(f" Connesso al broker (code {rc})")
@@ -12,7 +13,7 @@ def mqtt_listener(app):
                 inservienti = Inserviente.query.all()
                 print(f" Trovati {len(inservienti)} inservienti nel DB")
                 for ins in inservienti:
-                    topic = f"{ins.uuid}/bins/#"
+                    topic = f"{ins.citta}/bins/#"
                     print(f"Mi iscrivo a: {topic}")
                     client.subscribe(topic)
         else:
@@ -22,16 +23,15 @@ def mqtt_listener(app):
         print(f"Messaggio ricevuto su {msg.topic}: {msg.payload}")
         try:
             payload = json.loads(msg.payload.decode())
-            uuid = msg.topic.split("/")[0]
+            citta = msg.topic.split("/")[0]
             bidone_id = int(payload['id'])
 
             with app.app_context():
-                inserviente = Inserviente.query.filter_by(uuid=uuid).first()
+                inserviente = Inserviente.query.filter_by(citta=citta).all()
                 if not inserviente:
-                    print(f"UUID {uuid} non trovato nel DB")
                     return
 
-                bidone = Bidone.query.filter_by(id=bidone_id, inserviente_id=inserviente.id).first()
+                bidone = Bidone.query.filter_by(id=bidone_id).first()
 
                 if bidone:
                     bidone.weight = payload['weight']
@@ -40,21 +40,21 @@ def mqtt_listener(app):
                     bidone.latitude = payload['latitude']
                     bidone.longitude = payload['longitude']
                     bidone.tipo = payload['tipo']
-                    bidone.edificio = payload['edificio']
                     bidone.fulness = payload['fulness']
+                    bidone.citta = payload['citta']
 
                 else:
                     bidone = Bidone(
                         id=bidone_id,
-                        inserviente=inserviente,
                         weight=payload['weight'],
                         distance=payload['distance'],
                         is_full=payload['is_full'],
                         latitude=payload['latitude'],
                         longitude=payload['longitude'],
                         tipo=payload['tipo'],
-                        edificio=payload['edificio'],
-                        fulness=payload['fulness']
+                        fulness=payload['fulness'],
+                        citta=payload['citta']
+
                     )
                     db.session.add(bidone)
 
@@ -75,7 +75,7 @@ def mqtt_listener(app):
                     anomaly = "Misurazioni errate, controllare il bidone."
 
                 if anomaly:
-                    topic = f"{bidone.inserviente.uuid}/{bidone.id}/anomaly"
+                    topic = f"{bidone.inserviente.citta}/{bidone.id}/anomaly"
                     print(f" Pubblico anomalia: {anomaly} su {topic}")
                     client.publish(topic, anomaly, retain=True)
         except Exception as e:

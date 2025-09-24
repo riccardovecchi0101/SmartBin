@@ -10,8 +10,8 @@ class Inserviente(db.Model):
     name = db.Column(db.String(100), nullable=True)
     surname = db.Column(db.String(100), nullable=True)
     username = db.Column(db.String(100), unique=True, nullable=True)
-    piano = db.Column(db.String(10), nullable=True)
     password = db.Column(db.String(100), nullable=True)
+    citta = db.Column(db.String(100), nullable=True)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -25,8 +25,6 @@ class Inserviente(db.Model):
 
 class Bidone(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=False)
-    inserviente_id = db.Column(db.Integer, db.ForeignKey('inserviente.id'), nullable=True)
-    inserviente = db.relationship('Inserviente', backref=db.backref('bidoni', lazy=True))
     weight = db.Column(db.String(15), unique=False, nullable=True)
     distance = db.Column(db.String(15), unique=False, nullable=True)
     is_full = db.Column(db.Boolean, unique=False, nullable=True)
@@ -34,7 +32,7 @@ class Bidone(db.Model):
     longitude = db.Column(db.Float, nullable=True)
     fulness = db.Column(db.Integer, nullable=True)
     tipo = db.Column(db.String(20), nullable=True)
-    edificio = db.Column(db.String(50), nullable=True)
+    citta = db.Column(db.String(30),nullable=True)
 
     def __repr_(self):
         return f"Bidone: {self.id}, Gestito da: {self.inserviente}"
