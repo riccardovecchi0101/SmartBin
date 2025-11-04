@@ -1,194 +1,172 @@
-#include "HX711.h"
 #include <Servo.h>
 #include <Arduino.h>
 #include <stdbool.h>
 #include <math.h>
 #include <LiquidCrystal.h>
+#include "HX711.h"
 
-// ID e tipo bidone
-const int BIN_ID = 1;
-const char* TIPO = "PLASTICA";
-const char* CITTA = "Modena";
-
-// Pin sensore ultrasuoni
-#define TRIG_PIN 2
-#define ECHO_PIN 3
-
-// Pin HX711
-#define DOUT_PIN 13
-#define SCK_PIN  12
-
-// Servo per il coperchio
-#define SERVO_PIN 4
-#define ANGOLO_APERTO 20
-#define ANGOLO_CHIUSO 90
-
-LiquidCrystal lcd(5, 6, 7, 8, 9, 10);
+// === Pin HX711 ===
+const int LOADCELL_DOUT_PIN = 12;
+const int LOADCELL_SCK_PIN  = 13;
 
 HX711 scale;
-Servo servo;
 
-float peso = 0.0;
-float distanza = 0.0;
-int fulness = 0;
+// === Pin sensori e servo ===
+int trig = 2;
+int echo = 3;
+int servoPin = 4;
+
+// === Costanti cestino ===
+const float bin_height = 25.0; // altezza del cestino in cm (modifica secondo il tuo)
+const int SERVO_CLOSE_ANGLE = 20;
+const int SERVO_OPEN_ANGLE  = 90;
+const int floor_level = 1;
+
+Servo servo;
+LiquidCrystal lcd(5, 6, 7, 8, 9, 10);
+
+// === Variabili di stato ===
+float distance = 0.0;
+float percentage = 0.0;
+float prevWeight = 0.0;
+bool currentState = false;
 bool is_full = false;
 
-unsigned long lastSend = 0;
-const unsigned long SEND_INTERVAL = 2000;
+// Coordinate o identificativi — da completare
+double latitude = 44.6470;
+double longitude = 10.9250;
+int id = 1;
 
-String msgLCD = "";
-String tipoLCD = TIPO;
-unsigned long lastScroll = 0;
+unsigned long lastSendTime = 0;
+const unsigned long sendInterval = 5000;
+
+// === Variabili LCD ===
+String currentMessage = "";
 int scrollIndex = 0;
+unsigned long lastScrollTime = 0;
+const unsigned long scrollDelay = 600;
+const int lineLength = 16;
 
+// === PROTOTIPI ===
+void apri_cestino();
+void chiudi_cestino();
+void gestisciMessaggiLCD();
 
-void setup()
-{
+void setup() {
   Serial.begin(9600);
-  
-  // Servo e LCD
-  servo.attach(SERVO_PIN);
-  servo.write(ANGOLO_APERTO);
-  scale.begin(DOUT_PIN, SCK_PIN);
-  scale.set_scale(104.4053);
+
+  // Sensore distanza
+  pinMode(trig, OUTPUT);
+  digitalWrite(trig, LOW);
+  pinMode(echo, INPUT);
+
+  // Servo
+  servo.attach(servoPin);
+  servo.write(SERVO_OPEN_ANGLE);
+
+  // HX711
+  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  scale.set_scale(104);
   scale.tare();
 
-  // Setup sensori
-  pinMode(TRIG_PIN, OUTPUT);
-  pinMode(ECHO_PIN, INPUT);
-
+  // LCD
   lcd.begin(16, 2);
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print(TIPO);
-  lcd.setCursor(0, 1);
-  lcd.print("Avvio sensori...");
+  lcd.print("Sistema avviato");
 }
-
-
-// Misura peso in kg
-float leggiPeso() {
-  if (scale.is_ready()) {
-    float val = scale.get_units() / 1000.0;
-    if (val < 0) val = 0;
-    return val; 
-  } else {
-    return 0.0;
-  }
-}
-
-// Misura distanza in cm
-float leggiDistanza() {
-  digitalWrite(TRIG_PIN, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
-  long duration = pulseIn(ECHO_PIN, HIGH);
-  float distance = duration * 0.034 / 2;
-  if (distance < 0 || distance > 200) distance = 200;
-  return distance;
-}
-
-// Aggiorna LCD con messaggio scrollabile (riga 2)
-void mostraLCD(const String &testo) {
-  msgLCD = testo;
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print(tipoLCD);
-  lcd.setCursor(0, 1);
-  
-  if (msgLCD.length() <= 16) {
-    lcd.print(msgLCD);
-  } else {
-    lcd.print(msgLCD.substring(0, 16));
-  }
-  scrollIndex = 0;
-  lastScroll = millis();
-}
-
-// Scorrimento automatico se messaggio lungo
-void aggiornaScroll() {
-  if (msgLCD.length() <= 16) return;
-  if (millis() - lastScroll < 300) return;
-  
-  lastScroll = millis();
-  scrollIndex++;
-  
-  if (scrollIndex > msgLCD.length()) scrollIndex = 0;
-  
-  lcd.setCursor(0, 0);
-  lcd.print(tipoLCD);
-  lcd.setCursor(0, 1);
-  String window = msgLCD.substring(scrollIndex);
-  while (window.length() < 16) window += " ";
-  lcd.print(window.substring(0, 16));
-}
-
-// Invia dati su seriale
-void inviaDati() {
-  Serial.print("id:"); Serial.print(BIN_ID); Serial.print(",");
-  Serial.print("weight:"); Serial.print(peso, 2); Serial.print(",");
-  Serial.print("distance:"); Serial.print(distanza, 2); Serial.print(",");
-  Serial.print("fulness:"); Serial.print(fulness); Serial.print(",");
-  Serial.print("latitude:44.647000,");
-  Serial.print("longitude:10.925000,");
-  Serial.print("tipo:"); Serial.print(TIPO); Serial.print(",");
-  Serial.print("citta:"); Serial.print(CITTA); Serial.print(",");
-  Serial.print("is_full:"); Serial.print(is_full ? "1" : "0");
-  Serial.println();
-}
-
-// Gestisce comando ricevuto dal gateway
-void gestisciComando(const String &json) {
-  if (json.indexOf("\"op\":\"CLOSE\"") >= 0) {
-    servo.write(ANGOLO_CHIUSO);
-    mostraLCD("Coperchio chiuso");
-  } else if (json.indexOf("\"op\":\"OPEN\"") >= 0) {
-    servo.write(ANGOLO_APERTO);
-    mostraLCD("Coperchio aperto");
-  } else {
-    // altri comandi futuri
-    mostraLCD("Comando sconosciuto");
-  }
-}
-
 
 void loop() {
-  peso = leggiPeso();
-  distanza = leggiDistanza();
+  // Misura distanza
+  digitalWrite(trig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW);
+  long duration = pulseIn(echo, HIGH);
+  distance = (duration / 2.0) * 0.0343;
 
-  // Calcolo fulness e is_full (stima % riempimento)
-  fulness = map((int)distanza, 100, 10, 0, 100);
-  if (fulness < 0) fulness = 0;
-  if (fulness > 100) fulness = 100;
-  is_full = (fulness >= 90);
+  // Calcolo percentuale riempimento
+  percentage = 100.0 - (distance / bin_height) * 100.0;
+  if (percentage < 0) percentage = 0;
+  if (percentage > 100) percentage = 100;
+
+  // Misura peso
+  float weight = scale.get_units() / 1000.0;
+
+  // Stato di pieno
+  is_full = (distance <= 10 && weight > 0.3); // >0.3kg (modifica se serve)
+
+  // Gestione servo
+  if (is_full != currentState) {
+    if (is_full) chiudi_cestino();
+    else apri_cestino();
+  }
 
   // Invio dati periodico
-  if (millis() - lastSend >= SEND_INTERVAL) {
-    lastSend = millis();
-    inviaDati();
+  if (abs(weight - prevWeight) > 0.01 && millis() - lastSendTime >= sendInterval) {
+    prevWeight = weight;
+    lastSendTime = millis();
+
+    String data = "id:" + String(id) + ",";
+    data += "floor:" + String(floor_level) + ",";
+    data += "percentage:" + String(percentage) + ",";
+    data += "weight:" + String(weight, 2) + ",";
+    data += "distance:" + String(distance, 2) + ",";
+    data += "is_full:" + String(is_full ? "1" : "0") + ",";
+    data += "latitude:" + String(latitude, 6) + ",";
+    data += "longitude:" + String(longitude, 6);
+    Serial.println(data);
   }
 
-  // Scorrimento messaggi
-  aggiornaScroll();
+  gestisciMessaggiLCD();
+}
 
-  // Ricezione da seriale (comandi LCD / CMD)
-  if (Serial.available()) {
-    String line = Serial.readStringUntil('\n');
-    line.trim();
-    if (line.startsWith("LCD:")) {
-      String json = line.substring(4);
-      int i = json.indexOf("\"msg\":\"");
-      if (i >= 0) {
-        int start = i + 7;
-        int end = json.indexOf("\"", start);
-        if (end > start) {
-          String testo = json.substring(start, end);
-          mostraLCD(testo);
-        }
-      }
-  } else if (line.startsWith("CMD:")) {
-    String json = line.substring(4);
-      gestisciComando(json);
+// === FUNZIONI ===
+
+void apri_cestino() {
+  servo.write(SERVO_OPEN_ANGLE);
+  currentState = false;
+}
+
+void chiudi_cestino() {
+  servo.write(SERVO_CLOSE_ANGLE);
+  currentState = true;
+}
+
+void gestisciMessaggiLCD() {
+  if (Serial.available() > 0) {
+    currentMessage = Serial.readStringUntil('\n');
+    currentMessage.trim();
+    scrollIndex = 0;
+    lcd.clear();
+
+    if (currentMessage.startsWith("Anomalia:")) {
+      chiudi_cestino();
+    } else {
+      chiudi_cestino();
+      currentMessage = "Cestino chiuso";
+    }
   }
+
+  if (currentMessage.length() <= 32) {
+    lcd.setCursor(0, 0);
+    lcd.print(currentMessage.substring(0, lineLength));
+    if (currentMessage.length() > lineLength) {
+      lcd.setCursor(0, 1);
+      lcd.print(currentMessage.substring(lineLength));
+    } else {
+      lcd.setCursor(0, 1);
+      lcd.print("                ");
+    }
+  } else {
+    if (millis() - lastScrollTime >= scrollDelay) {
+      lastScrollTime = millis();
+      lcd.setCursor(0, 0);
+      lcd.print("Anomalia:       ");
+      if (scrollIndex + lineLength > currentMessage.length()) scrollIndex = 0;
+      String toDisplay = currentMessage.substring(scrollIndex, scrollIndex + lineLength);
+      lcd.setCursor(0, 1);
+      lcd.print(toDisplay + "                ");
+      scrollIndex++;
+    }
+  }
+}
