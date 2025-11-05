@@ -11,6 +11,8 @@ from flask_migrate import Migrate
 from models import *
 from loader import *
 
+
+print("[DEBUG] mainApp importato")
 secret_key = secrets.token_hex(16)
 
 app = Flask("mainApp")
@@ -170,12 +172,6 @@ def maps():
     return render_template("maps.html", bin_list=bin_dicts)
 
 
-def mqtt_listener(app):
-    with app.app_context():
-        print("MQTT listener avviato.")
-        while True:
-            time.sleep(2)
-            # logica MQTT
 
 
 if __name__ == "__main__":
