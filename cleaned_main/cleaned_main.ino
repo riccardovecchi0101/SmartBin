@@ -18,7 +18,7 @@ int servoPin = 4;
 
 // === Costanti cestino ===
 const float bin_height = 25.0; // altezza del cestino in cm (modifica secondo il tuo)
-const int SERVO_CLOSE_ANGLE = 20;
+const int SERVO_CLOSE_ANGLE = 0;
 const int SERVO_OPEN_ANGLE  = 90;
 const int floor_level = 1;
 
@@ -29,7 +29,8 @@ LiquidCrystal lcd(5, 6, 7, 8, 9, 10);
 float distance = 0.0;
 float percentage = 0.0;
 float prevWeight = 0.0;
-bool currentState = false;
+typedef enum State{CLOSED, OPEN};
+State current_state = OPEN;
 bool is_full = false;
 
 // Coordinate o identificativi — da completare
@@ -63,6 +64,7 @@ void setup() {
   // Servo
   servo.attach(servoPin);
   servo.write(SERVO_OPEN_ANGLE);
+ 
 
   // HX711
   scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
@@ -72,6 +74,8 @@ void setup() {
   // LCD
   lcd.begin(16, 2);
   lcd.print("Sistema avviato");
+  servo.detach();
+
 }
 
 void loop() {
@@ -92,17 +96,24 @@ void loop() {
   // Misura peso
   float weight = scale.get_units() / 1000.0;
 
+  // Stato di pieno (test value)
+  is_full =  (weight >= 0.1); // >0.3kg (modifica se serve)
   // Stato di pieno
-  is_full = (distance <= 10 && weight > 0.3); // >0.3kg (modifica se serve)
+  //is_full = (distance <= 10 && weight > 0.3); // >0.3kg (modifica se serve)
+
 
   // Gestione servo
-  if (is_full != currentState) {
+  if (is_full != (current_state == CLOSED)) {
+    servo.attach(servoPin);
+
     if (is_full) chiudi_cestino();
     else apri_cestino();
-  }
+}
 
+
+  //CONDIZIONE DA USARE : if (abs(weight - prevWeight) > 0.01 && millis() - lastSendTime >= sendInterval)
   // Invio dati periodico
-  if (abs(weight - prevWeight) > 0.01 && millis() - lastSendTime >= sendInterval) {
+  if (0.01 && millis() - lastSendTime >= sendInterval) {
     prevWeight = weight;
     lastSendTime = millis();
 
@@ -118,18 +129,29 @@ void loop() {
   }
 
   gestisciMessaggiLCD();
+
 }
 
 // === FUNZIONI ===
 
 void apri_cestino() {
   servo.write(SERVO_OPEN_ANGLE);
-  currentState = false;
+  current_state = OPEN;
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Sistema avviato");
+  delay(600);
+  servo.detach();
 }
 
 void chiudi_cestino() {
   servo.write(SERVO_CLOSE_ANGLE);
-  currentState = true;
+  current_state = CLOSED;
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Svuotami");
+  delay(600);
+  servo.detach();
 }
 
 void gestisciMessaggiLCD() {
