@@ -4,8 +4,10 @@ from models import db, Inserviente, Bidone
 from flask import current_app
 
 
-print("Starting MQTT listener...")
+print("[DEBUG] mqtt_listener importato")
+
 def mqtt_listener(app):
+    print("Starting MQTT listener...")
     def on_connect(client, userdata, flags, rc):
         print(f" Connesso al broker (code {rc})")
         if rc == 0:
@@ -13,7 +15,7 @@ def mqtt_listener(app):
                 inservienti = Inserviente.query.all()
                 print(f" Trovati {len(inservienti)} inservienti nel DB")
                 for ins in inservienti:
-                    topic = f"{ins.citta}/bins/#"
+                    topic = f"{ins.citta}/bins/+"
                     print(f"Mi iscrivo a: {topic}")
                     client.subscribe(topic)
         else:
@@ -40,8 +42,8 @@ def mqtt_listener(app):
                     bidone.latitude = payload['latitude']
                     bidone.longitude = payload['longitude']
                     bidone.tipo = payload['tipo']
-                    bidone.fulness = payload['fulness']
-                    bidone.citta = payload['citta']
+                    bidone.fulness = payload['percentage']
+                    #bidone.citta = payload['citta']
 
                 else:
                     bidone = Bidone(
@@ -52,7 +54,7 @@ def mqtt_listener(app):
                         latitude=payload['latitude'],
                         longitude=payload['longitude'],
                         tipo=payload['tipo'],
-                        fulness=payload['fulness'],
+                        fulness=payload['percentage'],
                         citta=payload['citta']
 
                     )
@@ -63,21 +65,7 @@ def mqtt_listener(app):
 
                 # CONTROLLO ANOMALIE
 
-                weight = float(bidone.weight)
-                distance = float(bidone.distance)
-
-                anomaly = None
-
-                if (weight > 15 and distance > 45) or (weight < 10 and distance < 45):
-                    anomaly = "Dati inconsistenti, controllare il bidone."
-
-                if weight > 20 or distance > 90:
-                    anomaly = "Misurazioni errate, controllare il bidone."
-
-                if anomaly:
-                    topic = f"{bidone.inserviente.citta}/{bidone.id}/anomaly"
-                    print(f" Pubblico anomalia: {anomaly} su {topic}")
-                    client.publish(topic, anomaly, retain=True)
+              
         except Exception as e:
             print(f"Errore nel processing del messaggio: {e}")
 
