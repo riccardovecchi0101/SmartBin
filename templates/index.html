@@ -1,70 +1,141 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h1 class="title">Welcome To Smart Bin</h1>
-        <p class="is-size-2 is-family-sans-serif">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non
-            risus.
-            Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices
-            diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy
-            molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. Duis semper. Duis arcu massa,
-            scelerisque
-            vitae, consequat in, pretium a, enim. Pellentesque congue. Ut in risus volutpat libero pharetra tempor. Cras
-            vestibulum bibendum augue. Praesent egestas leo in pede. Praesent blandit odio eu enim. Pellentesque sed dui
-            ut
-            augue blandit sodales. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia
-            Curae;
-            Aliquam nibh. Mauris ac mauris sed pede pellentesque fermentum. Maecenas adipiscing ante non diam sodales
-            hendrerit.
+    <section class="hero is-light is-medium">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title is-2">Smart Bin</h1>
+                <p class="subtitle is-5">
+                    La piattaforma per monitorare e gestire i cestini urbani in tempo reale:
+                    rilevazione peso/distanza, segnalazioni automatiche, mappa operativa e percorsi più efficienti.
+                </p>
+                <div class="buttons">
+                    <a class="button is-primary is-medium" href="{{ url_for('login') }}">Accedi</a>
+                    <a class="button is-info is-medium" href="{{ url_for('firstAccess') }}">Primo accesso (con
+                        UUID)</a>
+                </div>
+            </div>
+        </div>
+    </section>
 
-            Ut velit mauris, egestas sed, gravida nec, ornare ut, mi. Aenean ut orci vel massa suscipit pulvinar. Nulla
-            sollicitudin. Fusce varius, ligula non tempus aliquam, nunc turpis ullamcorper nibh, in tempus sapien eros
-            vitae
-            ligula. Pellentesque rhoncus nunc et augue. Integer id felis. Curabitur aliquet pellentesque diam. Integer
-            quis
-            metus vitae elit lobortis egestas. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Morbi vel erat
-            non
-            mauris convallis vehicula. Nulla et sapien. Integer tortor tellus, aliquam faucibus, convallis id, congue
-            eu,
-            quam. Mauris ullamcorper felis vitae erat. Proin feugiat, augue non elementum posuere, metus purus iaculis
-            lectus, et tristique ligula justo vitae magna.
+    <section class="section">
+        <div class="container">
+            <div class="columns is-multiline">
+                <div class="column is-one-third">
+                    <div class="box">
+                        <h3 class="title is-5">Monitoraggio continuo</h3>
+                        <p class="is-size-6">
+                            Ogni cestino invia periodicamente distanza e peso; quando supera la soglia viene marcato
+                            come pieno e mostrato in mappa.
+                        </p>
+                    </div>
+                </div>
+                <div class="column is-one-third">
+                    <div class="box">
+                        <h3 class="title is-5">Segnalazioni e anomalie</h3>
+                        <p class="is-size-6">
+                            Se i dati sono incoerenti o oltre limiti ragionevoli, il sistema genera un’anomalia e
+                            notifica l’operatore.
+                        </p>
+                    </div>
+                </div>
+                <div class="column is-one-third">
+                    <div class="box">
+                        <h3 class="title is-5">Assegnazioni dinamiche</h3>
+                        <p class="is-size-6">
+                            In base a orari/periodi (es. pranzo, festività) i cestini cambiano tipologia (carta,
+                            plastica, vetro, indifferenziato).
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-            Aliquam convallis sollicitudin purus. Praesent aliquam, enim at fermentum mollis, ligula massa adipiscing
-            nisl,
-            ac euismod nibh nisl eu lectus. Fusce vulputate sem at sapien. Vivamus leo. Aliquam euismod libero eu enim.
-            Nulla nec felis sed leo placerat imperdiet. Aenean suscipit nulla in justo. Suspendisse cursus rutrum augue.
-            Nulla tincidunt tincidunt mi. Curabitur iaculis, lorem vel rhoncus faucibus, felis magna fermentum augue, et
-            ultricies lacus lorem varius purus. Curabitur eu amet.
+            <div class="has-text-centered">
+                <a class="button is-link" href="{{ url_for('maps') }}">Apri la mappa</a>
+                <span class="is-size-7 has-text-grey"> (richiede login)</span>
+            </div>
+        </div>
+    </section>
 
-            [... continua qui con il testo ripetuto per renderlo molto lungo ...]
+    <section class="section">
+        <div class="container">
+            <div class="columns is-vcentered">
+                <div class="column is-half">
+                    <h2 class="title is-4">Progetto &amp; infografica</h2>
+                    <p class="is-size-6">
+                        Smart Bin integra Arduino con sensori <em>HC-SR04</em> (distanza) e <em>load cell</em> (peso).
+                        I dati viaggiano via <strong>MQTT/Mosquitto</strong> su topic strutturati per città e
+                        dispositivo;
+                        un <em>listener</em> su Flask aggiorna il database e la dashboard. La mappa mostra lo stato dei
+                        cestini e innesca notifiche quando necessario.
+                    </p>
 
-            Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem
-            aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-            Nemo
-            enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores
-            eos
-            qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet,
-            consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam
-            aliquam
-            quaerat voluptatem.
+                    <div class="content is-small" style="margin-top:0.75rem">
+                        <strong>Flusso</strong>:
+                        <span>Rileva ➝ Pubblica (MQTT) ➝ Aggiorna (server) ➝ Refresh mappa/Lista ➝ Notifica/Anomalia</span>.
+                    </div>
 
-            Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex
-            ea
-            commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil
-            molestiae
-            consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
+                    <div class="content is-small">
+                        <strong>Accesso operatori</strong>: registrazione con UUID aziendale e città, poi login e
+                        dashboard dedicata.
+                    </div>
 
-            [...] ripetizioni extra per allungare ulteriormente il testo [...]
+                    <div class="buttons" style="margin-top:1rem">
+                        <a class="button is-primary" href="{{ url_for('firstAccess') }}">Registrati con UUID</a>
+                        <a class="button is-light" href="{{ url_for('login') }}">Ho già un account</a>
+                    </div>
+                </div>
 
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing
-            elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur
-            adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet,
-            consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit
-            amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum
-            dolor
-            sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum
-            dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem
-            ipsum dolor sit amet, consectetur adipiscing elit.
+                <div class="column is-half">
+                    <div class="box">
+                        <div class="columns is-mobile is-multiline is-variable is-2">
+                            <div class="column is-half">
+                                <div class="box has-background-light">
+                                    <p class="has-text-weight-semibold">1) Rilevazione</p>
+                                    <p class="is-size-7">HC-SR04 + load cell su Arduino.</p>
+                                </div>
+                            </div>
+                            <div class="column is-half">
+                                <div class="box has-background-light">
+                                    <p class="has-text-weight-semibold">2) Pubblicazione</p>
+                                    <p class="is-size-7">Messaggi MQTT → broker Mosquitto.</p>
+                                </div>
+                            </div>
+                            <div class="column is-half">
+                                <div class="box has-background-light">
+                                    <p class="has-text-weight-semibold">3) Elaborazione</p>
+                                    <p class="is-size-7">Listener Flask aggiorna DB e controlla anomalie.</p>
+                                </div>
+                            </div>
+                            <div class="column is-half">
+                                <div class="box has-background-light">
+                                    <p class="has-text-weight-semibold">4) Visualizzazione</p>
+                                    <p class="is-size-7">Dashboard + Mappa con stato cestini.</p>
+                                </div>
+                            </div>
+                        </div>
 
-            [...] puoi copiare e incollare quante righe vuoi per farlo ancora più lungo!</p>
-          </p>
+                        <div class="content" style="margin-top:0.75rem">
+                            <ul>
+                                <li class="is-size-7"><strong>Soglie</strong>: se peso &amp; distanza superano i limiti
+                                    → “pieno”; se solo una supera → “anomalia”.
+                                </li>
+                                <li class="is-size-7"><strong>Refresh</strong>: la GUI interroga periodicamente <code>/refresh_bins</code>
+                                    per aggiornare lo stato.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section has-text-centered">
+        <p class="is-size-6">Pronto a migliorare la raccolta? Accedi alla tua area operativa.</p>
+        <div class="buttons is-centered">
+            <a class="button is-primary" href="{{ url_for('login') }}">Accedi</a>
+            <a class="button is-link is-light" href="{{ url_for('firstAccess') }}">Primo accesso</a>
+        </div>
+    </section>
 {% endblock %}
