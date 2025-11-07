@@ -1,3 +1,4 @@
+
 {% extends 'base.html' %}
 
 {% block content %}
@@ -17,6 +18,15 @@
             <div class="card custom-bin-card shadow" data-id="{{ bin.id }}">
                 <header class="card-header">
                     <p class="card-header-title">Bin number: {{ bin.id }}</p>
+                    {% if bin.is_full %}
+                        <button class="button is-danger mt-1 mb-1 is-small is-active is-rounded is-hovered">
+                                <img src="{{ url_for('static', filename='icons/bin.gif') }}" alt="Bidone" width="40" height="40">
+                        </button>
+                    {% else %}
+                        <button class="button is-primary mt-1 mb-1 is-small is-rounded is-hovered" disabled>
+                                <img src="{{ url_for('static', filename='icons/bin.gif') }}" alt="Bidone" width="40" height="40">
+                        </button>
+                    {% endif %}
                     <button class="card-header-icon" aria-label="more options">
                 <span class="icon">
                 <i class="fas fa-angle-down" aria-hidden="true"></i>
