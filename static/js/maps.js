@@ -43,7 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function buildPopup(bin) {
         return `<b>Cestino #${bin.id}</b><br>
-        <b>Edificio:</b> ${bin.edificio}<br>
+        <b>Città:</b> ${bin.ciita}<br>
+        <b>Tipo:</b> ${bin.tipo}<br>
         <b>Peso:</b> ${bin.weight} Kg<br>
         <b>Distanza Riempimento:</b> ${bin.distance} cm<br>
         <b>Stato:</b> ${bin.is_full ? "Pieno" : "Vuoto"}`;
@@ -151,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (bin.is_full) {
                     const item = document.createElement("li");
                     item.innerHTML = `
-                    <strong>Cestino #${bin.id}</strong> | Edificio: ${bin.edificio ?? '-'} | Peso: ${bin.weight} Kg | Distanza Riempimento: ${bin.distance} cm
+                    <strong>Cestino #${bin.id}</strong> | Città: ${bin.citta ?? '-'} | Peso: ${bin.weight} Kg | Tipo: ${bin.tipo ?? '-'} |Distanza Riempimento: ${bin.distance} cm
                 `;
                     item.addEventListener("click", () => {
                         const marker = markerById[bin.id];

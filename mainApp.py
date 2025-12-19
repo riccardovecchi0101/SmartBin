@@ -1,16 +1,13 @@
 import secrets
-import paho
-import json
 import threading
-import time
 
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_migrate import Migrate
 
+import loader
 from models import *
 from loader import *
-
 
 print("[DEBUG] mainApp importato")
 secret_key = secrets.token_hex(16)
@@ -25,6 +22,7 @@ migrate = Migrate(app, db)
 
 allowed_uid = ["c530fed9-0c82-44a4-bc20-23d1891d2ff6"]
 
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -32,6 +30,7 @@ def login_required(f):
             flash("Effettua il login per accedere a questa pagina.", "warning")
             return redirect(url_for("login"))
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -39,13 +38,16 @@ def login_required(f):
 def home():
     return render_template("index.html")
 
+
 @app.route("/index")
 def index():
     return home()
 
+
 @app.errorhandler(404)
 def handle_404(e):
     return home()
+
 
 @app.route("/firstAccess", methods=["GET", "POST"])
 def firstAccess():
@@ -61,7 +63,7 @@ def firstAccess():
         if inserviente:
             flash("UUID già registrato. Effettua il login.", "warning")
             return redirect(url_for("login"))
-        
+
         new_ins = Inserviente(uuid=uuid_input)
         db.session.add(new_ins)
         db.session.commit()
@@ -69,6 +71,7 @@ def firstAccess():
         return redirect(url_for("signup", uuid=uuid_input))
 
     return render_template("firstAccess.html")
+
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -93,13 +96,14 @@ def signup():
         inserviente.surname = surname
         inserviente.username = username
         inserviente.set_password(password)
-        inserviente.citta = citta 
+        inserviente.citta = citta
         db.session.commit()
 
         flash("Registrazione completata.", "success")
         return redirect(url_for("index"))
 
     return render_template("signup.html", uuid=uuid)
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -119,10 +123,12 @@ def login():
 
     return render_template("login.html")
 
+
 @app.route("/logout")
 def logout():
     session.pop("user_id", None)
     return redirect(url_for("index"))
+
 
 @app.route("/dashboard/")
 @login_required
@@ -130,6 +136,7 @@ def dashboard():
     inserviente = Inserviente.query.get(session["user_id"])
     bin_list = Bidone.query.filter(Bidone.citta == inserviente.citta).all()
     return render_template("dashboard.html", inserviente=inserviente, bin_list=bin_list)
+
 
 @app.route("/refresh_bins", methods=["GET"])
 @login_required
@@ -150,6 +157,7 @@ def refresh_bins():
     } for b in bin_list]
 
     return jsonify(bin_data)
+
 
 @app.route("/maps")
 @login_required
@@ -172,6 +180,27 @@ def maps():
     return render_template("maps.html", bin_list=bin_dicts)
 
 
+@app.route("/bins/<int:bin_id>/mode", methods=["POST"])
+@login_required
+def set_bin_mode(bin_id):
+    inserviente = Inserviente.query.get(session["user_id"])
+
+    bin_obj = Bidone.query.filter_by(id=bin_id, citta=inserviente.citta).first()
+    if not bin_obj:
+        return jsonify({"status": "error", "message": "Bidone non trovato"}), 404
+    
+
+    mode = request.json.get("mode") if request.is_json else request.form.get("mode")
+
+    if mode is None:
+        return jsonify({"error": "Modalità mancante"}), 400
+    
+    if mode.upper() not in ["LOCKED", "UNLOCKED", "AUTO"]:
+        return jsonify({"error": "Modalità non valida"}), 400
+
+    send_bin_command(bin_obj.citta, bin_obj.id, mode.upper())
+
+    return jsonify({"staus": "success", "message": f"Modalità del bidone {bin_id} impostata su {mode}."}), 200
 
 
 if __name__ == "__main__":

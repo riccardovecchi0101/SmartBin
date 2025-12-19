@@ -3,9 +3,11 @@ function refreshBins() {
     $.ajax({
         url: "/refresh_bins",
         method: "GET",
+        dataType: "json",
         success: function (data) {
             data.forEach(bin => {
                 const card = document.querySelector(`.card[data-id='${bin.id}']`);
+
                 if (card) {
                     const progress = card.querySelector("progress");
                     const percentLabel = card.querySelector(".percent-label");
@@ -35,9 +37,25 @@ function refreshBins() {
                     if (infoBtn) {
                         infoBtn.dataset.weight = bin.weight;
                         infoBtn.dataset.distance = bin.distance;
-                        infoBtn.dataset.isFull = bin.isFull;
+                        infoBtn.dataset.isFull = bin.is_full;
                         infoBtn.dataset.citta = bin.citta;
                         infoBtn.dataset.tipo = bin.tipo;
+                    }
+
+                    const unlockBtn = card.querySelector(".bin-button-container button");
+                    if (unlockBtn) {
+                        if (bin.is_full) {
+                            // cestino pieno
+                            unlockBtn.disabled = false;
+                            unlockBtn.classList.remove("is-primary");
+                            unlockBtn.classList.add("is-danger", "is-active", "unlocked-bin-btn");
+                            unlockBtn.dataset.id = bin.id;
+                        } else {
+                            // cestino non pieno
+                            unlockBtn.disabled = true;
+                            unlockBtn.classList.remove("is-danger", "is-active", "unlocked-bin-btn");
+                            unlockBtn.classList.add("is-primary");
+                        }
                     }
                 }
             });
@@ -46,8 +64,6 @@ function refreshBins() {
         }
     });
 }
-
-
 
 function animateProgress(progressEl, targetValue) {
     const current = parseFloat(progressEl.value) || 0;

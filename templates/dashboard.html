@@ -7,8 +7,8 @@
     <div class="container is-fluid">
         <div class="box">
             <h2 class="subtitle">Informazioni</h2>
-            <p><strong>UUID:</strong>{{ inserviente.uuid }}</p>
-            <p><strong>Città:</strong>{{ inserviente.citta}}</p>
+            <p><strong>UUID: </strong>{{ inserviente.uuid }}</p>
+            <p><strong>Città: </strong>{{ inserviente.citta}}</p>
         </div>
     </div>
 
@@ -16,23 +16,51 @@
         <h1 class="title"> Your Bins: </h1>
         {% for bin in bin_list %}
             <div class="card custom-bin-card shadow" data-id="{{ bin.id }}">
-                <header class="card-header">
+                <header class="card-header bin-header" data-id="{{ bin.id }}">
                     <p class="card-header-title">Bin number: {{ bin.id }}</p>
-                    {% if bin.is_full %}
-                        <button class="button is-danger mt-1 mb-1 is-small is-active is-rounded is-hovered">
+                    
+                    <div class="bin-button-container">
+                        {% if bin.is_full %}
+                            <button type="button"
+                                    class=" button is-danger mt-1 mb-1 is-small is-active is-rounded is-hovered unlocked-bin-btn"
+                                    data-id="{{ bin.id }}">
                                 <img src="{{ url_for('static', filename='icons/bin.gif') }}" alt="Bidone" width="40" height="40">
+                            </button>
+                        {% else %}
+                            <button class="button is-primary mt-1 mb-1 is-small is-rounded is-hovered" disabled>
+                                    <img src="{{ url_for('static', filename='icons/bin.gif') }}" alt="Bidone" width="40" height="40">
+                            </button>
+                        {% endif %}
+
+                        <!-- AUTO: rimette il bidone in modalità automatica -->
+                        <button type="button"
+                                class="button is-info mt-1 mb-1 is-small is-rounded is-hovered mode-auto-btn"
+                                data-id="{{ bin.id }}">
+                            AUTO
                         </button>
-                    {% else %}
-                        <button class="button is-primary mt-1 mb-1 is-small is-rounded is-hovered" disabled>
-                                <img src="{{ url_for('static', filename='icons/bin.gif') }}" alt="Bidone" width="40" height="40">
+                    
+                        <!-- UNLOCKED: apertura manuale -->
+                        <button type="button"
+                                class="button is-info mt-1 mb-1 is-small is-rounded is-hovered mode-unlocked-btn"
+                                data-id="{{ bin.id }}">
+                            UNLOCKED
                         </button>
-                    {% endif %}
+                    
+                        <!-- LOCKED: chiusura forzata manuale -->
+                        <button type="button"
+                                class="button is-dark mt-1 mb-1 is-small is-rounded is-hovered mode-locked-btn"
+                                data-id="{{ bin.id }}">
+                            LOCKED
+                        </button>
+                    </div>
+
                     <button class="card-header-icon" aria-label="more options">
-                <span class="icon">
-                <i class="fas fa-angle-down" aria-hidden="true"></i>
-                </span>
+                        <span class="icon">
+                            <i class="fas fa-angle-down" aria-hidden="true"></i>
+                        </span>
                     </button>
                 </header>
+
                 <div class="card-content">
                     <div class="content">
                         <h3 class="subtitle"> Fulness:</h3>
@@ -40,6 +68,7 @@
                         <progress class="progress" value="0" max="100" data-id="{{ bin.id }}"></progress>
                     </div>
                 </div>
+
                 <footer class="card-footer">
                     <a href="#"
                     class="card-footer-item show-modal"
@@ -48,14 +77,13 @@
                     data-distance="{{ bin.distance }}"
                     data-isfull="{{ bin.is_full }}"
                     data-tipo="{{ bin.tipo }}"
-                    data-edificio="{{ bin.edificio }}"
+                    data-citta="{{ bin.citta }}"
                  >Info</a>
                 </footer>
             </div>
         {% endfor %}
         
     </div>
-
 
     <div class="modal" id="infoModal">
         <div class="modal-background"></div>
@@ -70,10 +98,27 @@
                 <p><strong>Distance:</strong> <span id="modal-bin-distance"></span>cm</p>
                 <p><strong>IsFull:</strong> <span id="modal-bin-is_full"></span></p>
                 <p><strong>Type:</strong><span id="modal-type"></span></p>
-                <p><strong>Edificio:</strong><span id="modal-edificio"></span></p>
+                <p><strong>Città:</strong><span id="modal-citta"></span></p>
             </section>
             <footer class="modal-card-foot">
                 <button class="button is-success">OK</button>
+            </footer>
+        </div>
+    </div>
+
+    <div class="modal" id="finishModal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Unlocked Bin</p>
+                <button class="delete" aria-label="close"></button>
+            </header>
+            <section class="modal-card-body">
+                <p>Have you finished emptying the trash? <span id="finishing-bin-id"></span>?</p>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-success" id="finishing-yes-btn">Yes</button>
+                <button class="button" id="finishing-no-btn">No</button>
             </footer>
         </div>
     </div>
@@ -82,6 +127,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
+            // MODALE INFO
             const modal = document.getElementById('infoModal');
             const closeButtons = modal.querySelectorAll('.delete, .modal-background, .modal-card-foot button');
 
@@ -92,7 +138,7 @@
                     document.getElementById('modal-bin-distance').textContent = button.dataset.distance;
                     document.getElementById('modal-bin-is_full').textContent = button.dataset.isfull;
                     document.getElementById('modal-type').textContent = button.dataset.tipo;
-                    document.getElementById('modal-edificio').textContent = button.dataset.edificio;
+                    document.getElementById('modal-citta').textContent = button.dataset.citta;
                     modal.classList.add('is-active');
                 });
             });
@@ -102,10 +148,97 @@
                     modal.classList.remove('is-active');
                 });
             });
+
+            // MODALE FINISHING
+            const finishModal = document.getElementById('finishModal');
+            const finishBinIdSpan = document.getElementById('finishing-bin-id');
+            const finishYesBtn = document.getElementById('finishing-yes-btn');
+            const finishNoBtn = document.getElementById('finishing-no-btn');
+            const finishCloseButtons = finishModal.querySelectorAll('.delete');
+            let currentBinId = null;
+
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('.unlocked-bin-btn');
+                if (!button) return;
+                
+                const binId = button.dataset.id;
+                finishBinIdSpan.textContent = binId;
+                currentBinId = binId;
+
+                $.ajax({
+                    url: `/bins/${binId}/mode`,
+                    type: 'POST',
+                    data: { mode: 'UNLOCKED' },
+                    success: function(data) {
+                        console.log('Mode UNLOCKED inviata per bin', binId, data);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Errore invio mode UNLOCKED', error);
+                    }
+                });
+
+                finishModal.classList.add('is-active');
+            });
+
+            finishCloseButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            });
+
+            finishNoBtn.addEventListener('click', () => {
+                finishModal.classList.remove('is-active');
+            });
+
+            finishYesBtn.addEventListener('click', () => {
+                if (!currentBinId) return;
+
+                $.ajax({
+                    url: `/bins/${currentBinId}/mode`,
+                    type: 'POST',
+                    data: { mode: 'AUTO' },
+                    success: function(data) {
+                        console.log('Mode AUTO inviata per bin', currentBinId, data);
+                        finishModal.classList.remove('is-active');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Errore invio mode AUTO', error);
+                        finishModal.classList.remove('is-active');
+                    }
+                });
+            });
+
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('.mode-auto-btn, .mode-unlocked-btn, .mode-locked-btn');
+                if (!button) return;
+
+                const binId = button.dataset.id;
+                let mode = '';
+
+                if (button.classList.contains('mode-auto-btn')) {
+                    mode = 'AUTO';
+                } else if (button.classList.contains('mode-unlocked-btn')) {
+                    mode = 'UNLOCKED';
+                } else if (button.classList.contains('mode-locked-btn')) {
+                    mode = 'LOCKED';
+                }
+
+                $.ajax({
+                    url: `/bins/${binId}/mode`,
+                    type: 'POST',
+                    data: { mode: mode },
+                    success: function(data) {
+                        console.log('Mode', mode, 'inviata per bin', binId, data);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Errore invio mode', mode, error);
+                    }
+                });
+            });
         });
 
         refreshBins();
-        setInterval(refreshBins, 20000);
+        setInterval(refreshBins, 5000); // 5 secondi 
     </script>
 {% endblock %}
 
